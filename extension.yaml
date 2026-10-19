@@ -1,0 +1,5 @@
+title: Varnish
+description: A glossy, calm, chat-first finish for the term-llm web UI. Liquid glass, Geist type, a Paseo-style composer, ⌘K palette, tool timeline, and more.
+format_version: 1
+css: style.css
+js: main.js

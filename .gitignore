@@ -1,0 +1,8 @@
+# Per-machine config (node default accents)
+local.json
+
+# Dev tooling
+tools/node_modules/
+tools/out/
+
+.DS_Store

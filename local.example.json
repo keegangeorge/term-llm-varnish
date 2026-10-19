@@ -1,0 +1,7 @@
+{
+  "nodeAccents": {
+    "my-laptop": "graphite",
+    "my-server": "blue",
+    "my-container": "green"
+  }
+}
