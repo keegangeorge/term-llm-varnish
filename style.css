@@ -2773,6 +2773,359 @@ select optgroup {
 }
 
 /* ===================================================================
+ * Live voice
+ *
+ * The app's live panel (.live-status) becomes a glass "call card" that
+ * floats above the composer: a glossy accent orb carries the phase
+ * (breathes while listening, ripples while speaking, a spinning halo while
+ * connecting or working), the transcript sits in a quiet inset well, and
+ * Stop is a red pill. Core tints it with --accent, which Varnish uses for
+ * text, so every colour here is re-derived from --vn-accent.
+ * =================================================================== */
+
+.live-status {
+  --vn-live: var(--vn-accent);
+  position: relative;
+  isolation: isolate;
+  gap: 10px;
+  min-height: 0;
+  margin: 0 0 8px;
+  padding: 12px 12px 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--vn-live) 22%, var(--vn-glass-border));
+  border-radius: 20px;
+  background: var(--vn-glass);
+  -webkit-backdrop-filter: var(--vn-glass-blur);
+  backdrop-filter: var(--vn-glass-blur);
+  box-shadow: var(--vn-glass-shadow), var(--vn-glass-edge);
+  color: var(--text);
+  animation: vn-live-in var(--vn-slow) var(--vn-spring) both;
+}
+
+.live-status-failed {
+  --vn-live: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--vn-glass-border));
+}
+
+/* Accent light pooling behind the orb. */
+.live-status::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(260px 130px at 28px 26px,
+    color-mix(in srgb, var(--vn-live) 20%, transparent), transparent 70%);
+  pointer-events: none;
+  transition: opacity var(--vn-slow) ease;
+}
+
+.live-status-speaking::before { animation: vn-live-glow 2.6s ease-in-out infinite; }
+
+/* A highlight that runs along the rim while connecting or working. */
+.live-status-connecting::after,
+.live-status-requesting-permission::after,
+.live-status-working::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(90deg, transparent,
+    color-mix(in srgb, var(--vn-live) 85%, transparent), transparent) 0 0 / 35% 100% no-repeat;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: vn-live-sheen 2.2s var(--vn-ease) infinite;
+}
+
+.live-status-header { gap: 12px; }
+
+/* --- orb ------------------------------------------------------------ */
+
+.live-status .live-status-dot,
+.live-status .live-status-spinner {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%,
+      color-mix(in srgb, var(--vn-live) 30%, white) 0 7%,
+      var(--vn-live) 48%,
+      color-mix(in srgb, var(--vn-live) 55%, black) 100%);
+  box-shadow: inset 0 1px 1px rgb(255 255 255 / 40%),
+    inset 0 -5px 9px rgb(0 0 0 / 22%),
+    0 0 20px -3px color-mix(in srgb, var(--vn-live) 65%, transparent);
+  animation: none;
+  transition: transform var(--vn-med) var(--vn-spring), filter var(--vn-med) ease;
+}
+
+.live-status .live-status-dot::before,
+.live-status .live-status-dot::after,
+.live-status .live-status-spinner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Ripples. */
+.live-status .live-status-dot::before,
+.live-status .live-status-dot::after {
+  border: 1.5px solid color-mix(in srgb, var(--vn-live) 60%, transparent);
+  opacity: 0;
+}
+
+.live-status-listening .live-status-dot { animation: vn-orb-breathe 2.8s ease-in-out infinite; }
+.live-status-listening .live-status-dot::before { animation: vn-orb-ring 2.8s var(--vn-ease) infinite; }
+
+.live-status-speaking .live-status-dot { animation: vn-orb-talk 0.9s ease-in-out infinite alternate; }
+.live-status-speaking .live-status-dot::before { animation: vn-orb-ring 1.5s var(--vn-ease) infinite; }
+.live-status-speaking .live-status-dot::after { animation: vn-orb-ring 1.5s var(--vn-ease) 0.75s infinite; }
+
+/* Connecting / working: a dimmer orb with a spinning halo. */
+.live-status .live-status-spinner { filter: saturate(0.75) brightness(0.92); }
+
+.live-status .live-status-spinner::before {
+  inset: -4px;
+  background: conic-gradient(from 0deg, transparent 0 55%,
+    color-mix(in srgb, var(--vn-live) 90%, transparent) 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
+  animation: spin 0.9s linear infinite;
+}
+
+.live-status-failed .live-status-dot { box-shadow: inset 0 1px 1px rgb(255 255 255 / 35%),
+    inset 0 -5px 9px rgb(0 0 0 / 22%); }
+
+/* --- copy ----------------------------------------------------------- */
+
+.live-status-copy {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  line-height: 1.3;
+}
+
+.live-status-binding {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 450;
+  letter-spacing: 0;
+}
+
+/* --- stop ----------------------------------------------------------- */
+
+.live-status .live-status-stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 14px 0 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--stop-btn-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease,
+    transform var(--vn-med) var(--vn-spring);
+}
+
+.live-status .live-status-stop::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.live-status .live-status-stop:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+.live-status .live-status-stop:active:not(:disabled) { transform: scale(0.96); }
+
+/* --- transcript ------------------------------------------------------ */
+
+.live-status-transcript {
+  padding: 10px 12px;
+  max-height: calc(3 * 1.6em + 20px);
+  border-radius: 14px;
+  background: var(--bg-accent-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.live-status-transcript:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vn-accent) 45%, var(--border)), var(--vn-ring);
+}
+
+.live-status-transcript-expanded {
+  min-height: min(25dvh, 12rem);
+  max-height: min(42dvh, 26rem);
+}
+
+.live-status-turn + .live-status-turn { margin-top: 10px; }
+
+.live-status-speaker {
+  margin-right: 2px;
+  color: color-mix(in srgb, var(--vn-live) 80%, var(--text));
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.live-status-interrupted { color: var(--vn-text-subtle); }
+
+.live-status-transcript-actions {
+  gap: 2px;
+  margin-top: -4px;
+}
+
+.live-status .live-status-transcript-actions .btn {
+  height: 26px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.live-status .live-status-transcript-actions .btn:hover:not(:disabled) {
+  background: var(--bg-accent);
+  color: var(--text);
+}
+
+.live-status-error {
+  padding: 8px 11px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+  color: var(--error-text);
+  font-size: 0.8125rem;
+}
+
+/* Placeholder shown for a beat while the panel's code loads. */
+.live-status > span[role="status"] {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* --- live button in the composer ------------------------------------ */
+
+.send-btn.live[aria-pressed="true"] {
+  background: radial-gradient(circle at 34% 28%,
+      color-mix(in srgb, var(--vn-accent) 35%, white) 0 6%, var(--vn-accent) 55%,
+      color-mix(in srgb, var(--vn-accent) 70%, black) 100%);
+}
+
+.send-btn.live.live-pulse { animation: vn-live-btn 1.8s var(--vn-ease) infinite; }
+
+/* --- dictation strip (same family, smaller) -------------------------- */
+
+.voice-status {
+  margin: 0 0 8px;
+  border: 1px solid var(--vn-glass-border);
+  border-radius: 18px;
+  background: var(--vn-glass);
+  -webkit-backdrop-filter: var(--vn-glass-blur);
+  backdrop-filter: var(--vn-glass-blur);
+  box-shadow: var(--vn-glass-shadow), var(--vn-glass-edge);
+  animation: vn-live-in var(--vn-slow) var(--vn-spring) both;
+}
+
+.voice-status-failed { border-color: color-mix(in srgb, var(--danger) 35%, var(--vn-glass-border)); }
+
+.voice-status-recording .voice-status-dot {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--danger) 70%, transparent);
+  animation: vn-orb-breathe 1.4s ease-in-out infinite;
+}
+
+.voice-status-spinner { border-top-color: var(--vn-accent); }
+
+.voice-status .voice-status-actions .btn {
+  min-height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.voice-status .voice-status-actions .btn.voice-status-cancel { color: var(--text-muted); }
+.voice-status .voice-status-actions .btn.voice-status-cancel:hover:not(:disabled) {
+  background: var(--bg-accent);
+  color: var(--text);
+}
+
+/* --- motion ----------------------------------------------------------- */
+
+@keyframes vn-live-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes vn-live-glow { 50% { opacity: 0.55; } }
+
+@keyframes vn-live-sheen {
+  from { background-position: -40% 0; }
+  to { background-position: 140% 0; }
+}
+
+@keyframes vn-orb-breathe { 50% { transform: scale(1.07); } }
+
+@keyframes vn-orb-talk {
+  from { transform: scale(0.97); }
+  to { transform: scale(1.1); }
+}
+
+@keyframes vn-orb-ring {
+  0% { opacity: 0.85; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+@keyframes vn-live-btn {
+  0% { box-shadow: inset 0 1px 0 rgb(255 255 255 / 25%),
+    0 0 0 0 color-mix(in srgb, var(--vn-accent) 55%, transparent); }
+  100% { box-shadow: inset 0 1px 0 rgb(255 255 255 / 25%),
+    0 0 0 11px color-mix(in srgb, var(--vn-accent) 0%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-status,
+  .voice-status,
+  .live-status::before,
+  .live-status::after,
+  .live-status .live-status-dot,
+  .live-status .live-status-dot::before,
+  .live-status .live-status-dot::after,
+  .voice-status-recording .voice-status-dot,
+  .send-btn.live.live-pulse { animation: none; }
+
+  .live-status .live-status-spinner::before { animation-duration: 2.4s; }
+}
+
+@media (width <= 767px) {
+  .live-status { margin: 0 0 8px; padding: 10px 10px 10px 12px; border-radius: 22px; }
+  .live-status .live-status-stop { height: 38px; min-height: 38px; }
+  .live-status .live-status-transcript-actions .btn { height: 36px; min-height: 36px; }
+  .live-status-transcript:not(.live-status-transcript-expanded) { max-height: calc(2 * 1.6em + 20px); }
+}
+
+/* ===================================================================
  * Command palette (palette.js)
  * =================================================================== */
 

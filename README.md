@@ -22,6 +22,7 @@ Varnish combines frosted surfaces, soft accent lighting, Geist typography, and a
 - A rounded, chat-first composer with a compact model/effort chip that opens term-llm's own runtime controls.
 - A context-usage ring when the server exposes context data, with token details on hover.
 - A rainbow highlight for `ultrathink` when the selected provider is `claude-bin`. This is a visual cue, not a new model capability or an effort override.
+- A glass live-voice card above the composer: an accent orb that breathes while listening, ripples while speaking, and spins a halo while connecting or working, with the live transcript in a quiet inset and a red Stop pill. The dictation strip gets the same finish. Styling only; live voice itself is term-llm's.
 
 ![Composer with illustrative context usage and ultrathink highlight](docs/screenshots/composer.png)
 
@@ -153,6 +154,12 @@ node tools/screenshots.mjs
 ```
 
 The screenshot tool opens unsaved drafts and injects fictional content to regenerate `docs/screenshots/`. Inspect every output before committing, especially after host UI changes.
+
+```bash
+node tools/live-preview.mjs
+```
+
+The live preview injects the live-voice panel markup in every phase (connecting, listening, speaking, working, expanded, failed) in dark and light, without starting a call or using the microphone. It renders over whatever chat the server opens first, so its output in `tools/out/` can show your real conversations: keep it local.
 
 ### Files
 
