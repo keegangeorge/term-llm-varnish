@@ -25,12 +25,20 @@ export const ACCENTS = [
 // in the popover still overrides the default for that node.
 export const NODE_ACCENTS = {};
 
+// Optional per-node tile glyphs, keyed by Hub node id or display name, also
+// from local.json. Values are glyph names from GLYPHS; anything else is ignored.
+export const NODE_ICONS = {};
+export const GLYPHS = ["laptop", "cloud", "box", "sparkle", "home", "server", "core", "monogram"];
+
 export async function loadLocalConfig() {
   try {
     const res = await fetch(new URL("./local.json", import.meta.url), { credentials: "same-origin" });
     if (!res.ok) return;
     const cfg = await res.json();
     if (cfg && typeof cfg.nodeAccents === "object") Object.assign(NODE_ACCENTS, cfg.nodeAccents);
+    if (cfg && typeof cfg.nodeIcons === "object") {
+      for (const [key, glyph] of Object.entries(cfg.nodeIcons)) if (GLYPHS.includes(glyph)) NODE_ICONS[key] = glyph;
+    }
   } catch {
     // No local.json (the normal case): built-in defaults apply.
   }

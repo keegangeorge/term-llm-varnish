@@ -86,9 +86,9 @@ Use the palette icon in the header to choose appearance, accent, text size, and 
 
 ![Appearance controls](docs/screenshots/appearance.png)
 
-### Optional per-node accent defaults
+### Optional per-node accents and icons
 
-No personal node names or mappings are required. Everyone starts with Indigo unless a saved preference overrides it.
+No personal node names or mappings are required. Everyone starts with Indigo unless a saved preference overrides it, and each agent's tile icon is guessed from its name (a laptop for names with "local" or "mac", a cloud for "cloud", and so on), falling back to its initials.
 
 To define your own Hub defaults:
 
@@ -104,9 +104,15 @@ Edit `local.json` using your Hub's node IDs:
     "my-laptop": "graphite",
     "my-server": "blue",
     "my-container": "green"
+  },
+  "nodeIcons": {
+    "my-assistant": "core",
+    "my-nas": "home"
   }
 }
 ```
+
+`nodeIcons` picks an agent's tile glyph, keyed by node ID or display name: `laptop`, `cloud`, `box`, `sparkle`, `home`, `server`, `core` (an arc-reactor style ring), or `monogram` for initials. The tile is also that agent's tab favicon.
 
 Then run `./install.sh` again and reload extensions. Explicit browser accent choices take precedence. `local.json` is gitignored and is served to browsers as an extension asset, so **never put credentials or other secrets in it**. Updating without a source `local.json` preserves an existing installed copy.
 

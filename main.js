@@ -7,7 +7,7 @@
 
 import {
   KEYS, ACCENTS, NODE_ID, html, reducedMotion, read, write, nodeAccent,
-  setApiPrefix, loadLocalConfig,
+  setApiPrefix, loadLocalConfig, NODE_ICONS,
 } from "./util.js";
 import { createThread } from "./thread.js";
 import { createComposerExtras } from "./composer.js";
@@ -655,7 +655,8 @@ function createAgentSection(root) {
     if (!nameEl || !icon) return;
     const name = nameEl.textContent.trim();
     if (icon.dataset.vnName === name) return;
-    const kind = KINDS.find(([re]) => re.test(name))?.[1] ?? "monogram";
+    const id = link.closest(".hub-agent-row")?.dataset.reorderId;
+    const kind = NODE_ICONS[id] ?? NODE_ICONS[name] ?? KINDS.find(([re]) => re.test(name))?.[1] ?? "monogram";
     icon.dataset.vnName = name;
     icon.dataset.vnKind = kind;
     icon.dataset.vnInitials = initials(name);
