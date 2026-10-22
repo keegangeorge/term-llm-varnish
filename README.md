@@ -33,6 +33,7 @@ Varnish combines frosted surfaces, soft accent lighting, Geist typography, and a
 - Collapsible sidebar groups and a clearer active-chat treatment.
 - New-chat starter prompts and recent-conversation cards.
 - Hub agent list or compact dock presentation, with accents and a current-node indicator. Hub-specific elements appear only when the host UI provides them.
+- Under a Hub, each agent's tab uses that agent's own sidebar tile as its favicon (its accent plus its glyph or initials), so tabs for different agents are easy to tell apart.
 
 ![Command palette](docs/screenshots/palette.png)
 
@@ -173,6 +174,7 @@ The live preview injects the live-voice panel markup in every phase (connecting,
 | `composer.js` | Context usage and ultrathink highlighting |
 | `palette.js` | Keyboard command palette |
 | `notify.js` | Background-tab title/favicon signals |
+| `favicon.js` | Per-node tab icon under a Hub |
 | `fonts/` | Locally bundled Geist fonts and license |
 | `tools/` | Optional browser checks and demo screenshot tooling |
 

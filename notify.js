@@ -22,13 +22,20 @@ export function createTabNotifier(root) {
     );
   }
 
+  // favicon.js may swap the base icon for this node's tile (data-vn-base);
+  // the badge is drawn on top of whichever base is current.
+  const baseHref = () => iconLink?.dataset.vnBase || originalHref;
+
   async function badgeHref(kind) {
-    if (badgeCache[kind]) return badgeCache[kind];
     iconLink ??= document.querySelector('link[rel="icon"]');
     if (!iconLink) return null;
-    originalHref ??= iconLink.href;
+    originalHref ??= iconLink.dataset.vnBadged ? null : iconLink.href;
+    const base = baseHref();
+    if (!base) return null;
+    const key = `${kind}|${base}`;
+    if (badgeCache[key]) return badgeCache[key];
     const img = new Image();
-    img.src = originalHref;
+    img.src = base;
     await img.decode().catch(() => {});
     const size = 64;
     const canvas = document.createElement("canvas");
@@ -43,22 +50,28 @@ export function createTabNotifier(root) {
     ctx.arc(size - 15, size - 15, 10, 0, Math.PI * 2);
     ctx.fillStyle = COLOR[kind];
     ctx.fill();
-    badgeCache[kind] = canvas.toDataURL("image/png");
-    return badgeCache[kind];
+    badgeCache = { [key]: canvas.toDataURL("image/png") };
+    return badgeCache[key];
   }
 
   async function setState(next) {
     if (next === state) return;
     state = next;
     if (!next) {
-      if (iconLink && originalHref) iconLink.href = originalHref;
+      if (iconLink) {
+        delete iconLink.dataset.vnBadged;
+        if (baseHref()) iconLink.href = baseHref();
+      }
       for (const p of Object.values(PREFIX)) {
         if (document.title.startsWith(p)) document.title = document.title.slice(p.length);
       }
       return;
     }
     const href = await badgeHref(next);
-    if (state === next && href && iconLink) iconLink.href = href;
+    if (state === next && href && iconLink) {
+      iconLink.dataset.vnBadged = "1";
+      iconLink.href = href;
+    }
     applyTitle();
   }
 

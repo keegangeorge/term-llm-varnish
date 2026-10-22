@@ -27,7 +27,7 @@ done
 say() { [ "$QUIET" = 1 ] || echo "$@"; }
 
 mkdir -p "$DEST/fonts"
-FILES=(extension.yaml style.css main.js util.js thread.js composer.js palette.js notify.js)
+FILES=(extension.yaml style.css main.js util.js thread.js composer.js palette.js notify.js favicon.js)
 for f in "${FILES[@]}"; do cp "$HERE/$f" "$DEST/$f"; done
 cp "$HERE"/fonts/*.woff2 "$HERE/fonts/OFL.txt" "$DEST/fonts/"
 # Optional, untracked per-machine config (node default accents).

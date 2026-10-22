@@ -13,6 +13,7 @@ import { createThread } from "./thread.js";
 import { createComposerExtras } from "./composer.js";
 import { createPalette } from "./palette.js";
 import { createTabNotifier } from "./notify.js";
+import { createNodeFavicon } from "./favicon.js";
 
 const SCHEMES = [
   { id: "system", name: "System" },
@@ -868,12 +869,14 @@ export async function activate(api) {
   const extras = createComposerExtras(root, api);
   const palette = createPalette(root, { theme, thread, toggleAgentDock: agents.toggleDock });
   const notifier = createTabNotifier(root);
+  const favicon = createNodeFavicon(root);
 
   // Whole-UI pass: idempotent and cheap per call, but it walks the thread,
   // so it is throttled while a reply streams (see the observer below).
   function tick() {
     groups.enhance();
     agents.sync();
+    favicon.sync();
     picker.ensureButton(root);
     bar.sync();
     floating.sync();
@@ -959,6 +962,7 @@ export async function activate(api) {
     extras.dispose();
     palette.dispose();
     notifier.dispose();
+    favicon.dispose();
     theme.dispose();
   };
 }
