@@ -1,0 +1,78 @@
+name: Varnish CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: varnish-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source:
+    name: Fast source checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.14.0
+      - name: Syntax, manifest assets, example JSON, licenses, light tokens
+        run: node tools/ci/source-check.mjs
+      - name: Tooling unit tests (no application execution)
+        run: |
+          node --test tools/ci/*.test.mjs
+          python3 -B -m unittest discover -s tools/ci -p 'test_*.py'
+
+  browser:
+    name: Isolated synthetic browser
+    needs: source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/varnish-browsers
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.14.0
+      - name: Install locked browser tooling (no lifecycle scripts)
+        working-directory: tools
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Download and verify fixed official fixture
+        run: python3 -B tools/ci/download.py "$RUNNER_TEMP/varnish-fixture/term-llm"
+      - name: Run fixture and browser without external networking
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tools/out/ci
+          # A fresh network namespace has no external interfaces or default route.
+          # Drop back to the unprivileged runner before starting either child.
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            exec runuser -u runner -- env PATH="$1" PLAYWRIGHT_BROWSERS_PATH="$2" \
+              python3 -B tools/ci/run.py "$3"
+          ' _ "$PATH" "$PLAYWRIGHT_BROWSERS_PATH" "$RUNNER_TEMP/varnish-fixture/term-llm" \
+            2>&1 | tee tools/out/ci/runner.log
+      - name: Upload synthetic evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: varnish-synthetic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: tools/out/ci/
+          if-no-files-found: warn
+          retention-days: 3
+          include-hidden-files: false
