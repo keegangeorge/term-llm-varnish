@@ -142,6 +142,17 @@ To return to the stock UI, disable Varnish in **Settings → Extensions** and re
 
 ## Development and checks
 
+### Automated CI (isolated fixture)
+
+The [CI tooling and VM handoff](tools/ci/README.md) describe fast, dependency-free
+source checks and a separate read-only browser baseline against the checksum-pinned
+term-llm 0.9.88 fixture. CI uses a fresh synthetic home and loopback-only network
+namespace, never the personal-server tools below. This implementation is currently
+source-reviewed only: the parent must generate the Playwright 1.50.0 lockfile and
+run validation in its dedicated VM before publishing. No browser pass is claimed.
+
+### Optional personal-server checks
+
 Runtime requires no Node.js or build step. The optional browser checks require Node.js, Playwright, and a local term-llm web server with Varnish enabled:
 
 ```bash
