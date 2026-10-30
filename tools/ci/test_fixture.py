@@ -65,18 +65,57 @@ class CleanupTests(unittest.TestCase):
     @patch('run.os.killpg')
     def test_cleanup_targets_only_owned_group(self, killpg):
         child = Mock(pid=123)
-        run.stop(child)
-        killpg.assert_called_once_with(123, run.signal.SIGTERM)
-        child.wait.assert_called_once_with(timeout=5)
-
-    @patch('run.os.killpg')
-    def test_timeout_escalates_owned_group(self, killpg):
-        child = Mock(pid=123)
-        child.wait.side_effect = [run.subprocess.TimeoutExpired('synthetic', 5), 0]
+        killpg.side_effect = [None, ProcessLookupError]
         run.stop(child)
         self.assertEqual(killpg.call_args_list, [unittest.mock.call(123, run.signal.SIGTERM),
-                                               unittest.mock.call(123, run.signal.SIGKILL)])
+                                               unittest.mock.call(123, 0)])
+        child.wait.assert_called_once_with(timeout=5)
 
+    @patch('run.time.sleep')
+    @patch('run.time.monotonic', side_effect=[0, 1, 6])
+    @patch('run.os.killpg')
+    def test_exited_leader_still_escalates_owned_group(self, killpg, monotonic, sleep):
+        child = Mock(pid=123)
+        child.poll.return_value = 0
+        run.stop(child)
+        self.assertEqual(killpg.call_args_list, [unittest.mock.call(123, run.signal.SIGTERM),
+                                               unittest.mock.call(123, 0),
+                                               unittest.mock.call(123, run.signal.SIGKILL)])
+        child.wait.assert_called_once_with(timeout=5)
+
+    def test_real_descendant_ignoring_term_after_leader_exits(self):
+        # Synthetic processes only; run this test in the dedicated VM.
+        import os
+        import subprocess
+        import sys
+        import time
+        descendant = ('import os,signal,time; signal.signal(signal.SIGTERM, signal.SIG_IGN); '
+                      'print(os.getpid(),flush=True); time.sleep(60)')
+        leader = ('import subprocess,sys,time; '
+                  f'subprocess.Popen([sys.executable,"-c",{descendant!r}]); time.sleep(60)')
+        child = subprocess.Popen([sys.executable, '-c', leader], start_new_session=True,
+                                 stdout=subprocess.PIPE, text=True)
+        try:
+            import select
+            self.assertTrue(select.select([child.stdout], [], [], 5)[0], 'descendant ready')
+            pid = int(child.stdout.readline())
+            started = time.monotonic()
+            run.stop(child)
+            self.assertLess(time.monotonic() - started, 12)
+            self.assertIsNotNone(child.poll())
+            # An orphan zombie awaiting container-init reaping is not a live process.
+            state = Path(f'/proc/{pid}/stat')
+            deadline = time.monotonic() + 2
+            while state.exists() and state.read_text().split()[2] != 'Z' and time.monotonic() < deadline:
+                time.sleep(0.05)
+            self.assertTrue(not state.exists() or state.read_text().split()[2] == 'Z')
+        finally:
+            try:
+                os.killpg(child.pid, run.signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            child.wait(timeout=5)
+            child.stdout.close()
 
 if __name__ == '__main__':
     unittest.main()

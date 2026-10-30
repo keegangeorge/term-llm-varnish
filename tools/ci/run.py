@@ -20,15 +20,27 @@ BASE = 'http://127.0.0.1:18080/ui/'
 def stop(child):
     if child is None:
         return
-    # Only groups created by this invocation, never ps/proc discovery or PID files.
+    # The leader may exit before descendants (including ones ignoring TERM).
+    # Check the owned group, not merely child.wait(), throughout a bounded grace.
     try:
         os.killpg(child.pid, signal.SIGTERM)
+    except ProcessLookupError:
         child.wait(timeout=5)
-    except subprocess.TimeoutExpired:
+        return
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        child.poll()  # Reap an exited leader without losing the owned group ID.
+        try:
+            os.killpg(child.pid, 0)
+        except ProcessLookupError:
+            child.wait(timeout=5)
+            return
+        time.sleep(0.05)
+    try:
         os.killpg(child.pid, signal.SIGKILL)
-        child.wait(timeout=5)
     except ProcessLookupError:
         pass
+    child.wait(timeout=5)
 
 
 def interrupted(signum, frame):
@@ -66,6 +78,9 @@ def main():
                'XDG_DATA_HOME': str(home / 'data'), 'XDG_CACHE_HOME': str(home / 'cache'),
                'PATH': os.environ['PATH'], 'LANG': 'C.UTF-8',
                'PLAYWRIGHT_BROWSERS_PATH': os.environ['PLAYWRIGHT_BROWSERS_PATH']}
+        if os.environ.get('VARNISH_CI_CHROMIUM'):
+            env['VARNISH_CI_CHROMIUM'] = str(
+                Path(os.environ['VARNISH_CI_CHROMIUM']).resolve(strict=True))
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         (OUT / 'fixture.json').write_text(json.dumps({
             'synthetic': True, 'sessions': [], 'localSettings': {},

@@ -6,7 +6,12 @@ import { BASE, allowedRequest } from './policy.mjs';
 const out = new URL('../out/ci/', import.meta.url);
 fs.mkdirSync(out, { recursive: true });
 const report = { synthetic: true, fixture: 'empty session store; local.json = {}; debug:fast', results: [], blocked: [] };
-const browser = await chromium.launch({ args: ['--disable-background-networking'] });
+const browser = await chromium.launch({
+  // Explicit offline-VM override only; CI normally uses the pinned Playwright browser.
+  // Never discover or silently fall back to another installed browser.
+  executablePath: process.env.VARNISH_CI_CHROMIUM || undefined,
+  args: ['--disable-background-networking'],
+});
 let failed = false;
 try {
   for (const [name, options] of [
@@ -44,7 +49,9 @@ try {
       await page.keyboard.press('Control+k');
       await page.locator('.vn-pal').waitFor({ state: 'visible' });
       await page.locator('.vn-pal-input').fill('Open settings');
-      await page.locator('.vn-pal-item').filter({ hasText: 'Open settings' }).waitFor({ state: 'visible' });
+      await page.locator('.vn-pal-item').filter({
+        has: page.locator('.vn-pal-title').filter({ hasText: /^Open settings$/ }),
+      }).waitFor({ state: 'visible' });
       await page.screenshot({ path: new URL(`${name}-palette.png`, out).pathname });
       await page.keyboard.press('ArrowDown');
       await page.keyboard.press('ArrowUp');

@@ -2,35 +2,37 @@
 
 ## Status and handoff
 
-This implementation was **source-reviewed only** in the dedicated `jarvis/ci-checks`
-worktree. No npm, application, browser, unit tests, build, or controller code was
-executed there. No commits, pushes, PRs, credentials, or changes to other worktrees
-were made. The commands below are for the **parent's dedicated Linux VM**, not the
-controller. They are validation instructions, not passing-test claims.
+The lockfile was normalized by npm in the dedicated network-disabled Linux VM
+from the exact public tarballs recorded in `dependencies.json`. It retains public
+registry URLs and integrity hashes. Use `npm ci`; never silently resolve ranges.
+No root package.json is needed. Publication and independent review remain the
+parent's responsibility; local VM evidence is not a GitHub Actions run.
 
-**Before publishing:** generate `tools/package-lock.json` in that VM, copy back
-only that generated lockfile, review it against `dependencies.json`, and run the
-checks. The workflow deliberately uses `npm ci` and will fail without the lockfile;
-it never silently resolves a floating range. No root package.json is needed.
+Playwright stays at **1.50.0** (Node >=18), with exact `playwright-core` **1.50.0**
+and optional Darwin `fsevents` **2.3.2**. CI installs that release's Chromium.
+For offline VM validation only, an explicitly selected system Chromium can be
+used with `VARNISH_CI_CHROMIUM=/usr/bin/chromium`; there is no automatic discovery
+or browser fallback. Record its version separately: a system-browser pass does
+not prove the pinned Playwright browser or hosted Actions setup passed.
 
-Playwright stays at **1.50.0**, the existing tooling's minimum version (Node >=18),
-with exact `playwright-core` **1.50.0**, optional Darwin `fsevents` **2.3.2**. Public
-registry tarball URLs/integrities are recorded in `dependencies.json` to support
-verified tarball staging and offline VM installation. That metadata is **not** a
-substitute for npm's VM-generated lockfile. Chromium revision is chosen by this
-pinned Playwright release; stage its browser cache and OS dependencies for offline
-VM use too. Do not change resolved URLs in the lockfile to controller-local paths.
 
 ## VM validation
 
 From the VM copy's actual repository root (confirm with `pwd`):
 
 ```sh
-# VM ONLY; use the staged registry cache when the VM is offline.
-(cd tools && npm install --package-lock-only --ignore-scripts --no-audit --no-fund)
-(cd tools && npm ci --ignore-scripts --no-audit --no-fund)
+# VM ONLY; seed a fresh cache with previously integrity-verified public tarballs.
+export npm_config_cache=/tmp/varnish-ci-npm-cache
+for package in /path/to/verified/public/*.tgz; do
+  npm cache add --offline --ignore-scripts "$package"
+done
+(cd tools && npm install --package-lock-only --offline --ignore-scripts --no-audit --no-fund)
+(cd tools && npm ci --offline --ignore-scripts --no-audit --no-fund)
 export PLAYWRIGHT_BROWSERS_PATH=/tmp/varnish-ci-browsers
-(cd tools && ./node_modules/.bin/playwright install --with-deps chromium)
+# Offline validation uses the explicitly selected, already installed system browser.
+export VARNISH_CI_CHROMIUM=/usr/bin/chromium
+# Online hosted CI instead installs the pinned Playwright browser before isolation:
+# (cd tools && ./node_modules/.bin/playwright install --with-deps chromium)
 node tools/ci/source-check.mjs
 node --test tools/ci/*.test.mjs
 python3 -B -m unittest discover -s tools/ci -p 'test_*.py'
@@ -44,8 +46,8 @@ sudo unshare --net -- bash -c '
   set -euo pipefail
   ip link set lo up
   exec runuser -u "$1" -- env PATH="$2" PLAYWRIGHT_BROWSERS_PATH="$3" \
-    python3 -B tools/ci/run.py "$4"
-' _ "$USER" "$PATH" "$PLAYWRIGHT_BROWSERS_PATH" /tmp/varnish-ci-bin/term-llm
+    VARNISH_CI_CHROMIUM="$4" python3 -B tools/ci/run.py "$5"
+' _ "$USER" "$PATH" "$PLAYWRIGHT_BROWSERS_PATH" "$VARNISH_CI_CHROMIUM" /tmp/varnish-ci-bin/term-llm
 ```
 
 Do not fall back to an existing server if namespace setup, readiness, a selector,
@@ -53,8 +55,13 @@ or a network guard fails. Inspect synthetic `tools/out/ci/report.json`, screensh
 `server.log`, and the runner's stderr. Check cleanup after success, assertion failure,
 and termination in the VM. A fresh namespace requires `unshare`, `ip`, `runuser`, and
 permission to create network namespaces; CI uses an ephemeral GitHub-hosted runner.
-If the dedicated VM forbids namespaces, report that blocker rather than weakening
-isolation or running against the operator's server.
+If creating an additional namespace is unavailable, the dedicated assessment
+container's pre-established `network=none` namespace is an equivalent offline
+validation environment: verify that `/proc/net/dev` lists only `lo` and the route
+table has no entries, then run `python3 -B tools/ci/run.py` as its unprivileged
+user with the verified binary path. The runner enforces those same checks. Never
+use a merely firewalled or ordinary bridge network as a fallback. Hosted Actions
+namespace creation remains a separately untested setup until Actions executes.
 
 ## Scope and boundaries
 
