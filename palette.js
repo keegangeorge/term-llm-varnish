@@ -189,11 +189,20 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
       ranked.push({
         group: "Search", icon: "search", title: `Search all chats for “${q}”`, marks: [],
         run: () => {
-          const s = root.querySelector(".sidebar-search-input");
-          if (!s) return;
-          s.value = q;
-          s.dispatchEvent(new Event("input", { bubbles: true }));
-          s.focus();
+          const sidebar = root.querySelector(".sidebar");
+          const menu = root.querySelector("#mobileMenuBtn");
+          // Use the app's controls so its overlay/focus state stays in sync.
+          if (sidebar?.classList.contains("collapsed")) root.querySelector("#sidebarToggleBtn")?.click();
+          if (menu?.getClientRects().length && !sidebar?.classList.contains("open")) menu.click();
+          // The native mobile overlay schedules its own focus on the next
+          // frame. Hand off after that, and re-query in case the app rendered.
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            const s = root.querySelector(".sidebar-search-input");
+            if (!s) return;
+            s.value = q;
+            s.dispatchEvent(new Event("input", { bubbles: true }));
+            s.focus();
+          }));
         },
       });
     }
