@@ -2097,6 +2097,15 @@ select optgroup {
 
 .settings-tabs [role="tab"]::after { display: none; }
 
+/* The desktop dialog owns the sidebar surface; keep the segmented strip on mobile. */
+@media (min-width: 720px) {
+  .settings-modal .settings-tabs {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+  }
+}
+
 .widget-card {
   border-radius: 16px;
   transition: transform var(--vn-med) var(--vn-spring), background-color var(--vn-fast) ease,
