@@ -5,6 +5,7 @@
   "description": "Dev tooling for the Varnish term-llm extension (health check + screenshots).",
   "scripts": {
     "check": "node check.mjs",
+    "check:compaction": "node check-compaction.mjs",
     "check:source": "node ci/source-check.mjs",
     "test:ci": "node --test ci/*.test.mjs"
   },
