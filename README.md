@@ -203,6 +203,10 @@ The live preview injects the live-voice panel markup in every phase (connecting,
 | `fonts/` | Locally bundled Geist fonts and license |
 | `tools/` | Optional browser checks and demo screenshot tooling |
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for commit message and pull request title conventions.
+
 ## License
 
 Code: [MIT](LICENSE). Bundled Geist and Geist Mono fonts: [SIL Open Font License 1.1](fonts/OFL.txt), copyright Vercel in collaboration with basement.studio.
