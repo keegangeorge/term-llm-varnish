@@ -142,6 +142,17 @@ To return to the stock UI, disable Varnish in **Settings → Extensions** and re
 
 ## Development and checks
 
+### Automated CI (isolated fixture)
+
+The [CI tooling and VM handoff](tools/ci/README.md) describe fast, dependency-free
+source checks and a separate read-only browser baseline against the checksum-pinned
+term-llm 0.9.88 fixture. CI uses a fresh synthetic home and loopback-only network
+namespace, never the personal-server tools below. This implementation is currently
+source-reviewed only: the parent must generate the Playwright 1.50.0 lockfile and
+run validation in its dedicated VM before publishing. No browser pass is claimed.
+
+### Optional personal-server checks
+
 Runtime requires no Node.js or build step. The optional browser checks require Node.js, Playwright, and a local term-llm web server with Varnish enabled:
 
 ```bash
@@ -151,6 +162,14 @@ npx playwright install chromium
 cd ..
 node tools/check.mjs
 ```
+
+For the in-progress compaction notice, an additional **CSS-state fixture** uses the loading markup from term-llm 0.9.88 in a real Varnish page:
+
+```bash
+TERM_LLM_TEST_URL=http://127.0.0.1:18080/ui/ node tools/check-compaction.mjs
+```
+
+Use an isolated loopback test server, not a personal chat server. This check blocks non-read requests, inserts synthetic status markup, and verifies dark/light accents, reduced motion, accessibility attributes and mobile fit. It does **not** invoke `/compact`, test backend compaction, or certify other term-llm versions. Set `CHROMIUM_PATH` if the test environment supplies its own browser.
 
 The check verifies extension loading, available UI hooks, injected controls, light-mode token consistency, and basic desktop/mobile behavior without sending a message. It cannot verify conditionally mounted generation controls while idle, real tool execution, or every provider. Its HTML report and screenshots go to ignored `tools/out/`; **these can contain your actual chats and must not be published**.
 

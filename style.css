@@ -1636,6 +1636,26 @@ a {
 
 .composer { background: transparent; padding-top: 0.25rem; }
 
+/* The in-progress /compact notice is separate from transcript completion
+ * boundaries. Keep the finish local to this composer status, not other
+ * interaction-attention banners or spinner states. */
+.composer .compaction-status {
+  gap: 10px;
+  border-color: var(--vn-glass-border);
+  border-radius: 18px;
+  background: var(--vn-glass);
+  color: var(--text-muted);
+  box-shadow: var(--vn-glass-edge);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  font-size: 0.8125rem;
+}
+
+.composer .compaction-status-spinner {
+  border-color: var(--border-strong);
+  border-top-color: var(--vn-accent);
+}
+
 /* Floating composer: the thread scrolls underneath the glass (main.js sets
  * data-vn-float and --vn-composer-h once it has measured). */
 .main[data-vn-float] > .composer {
@@ -2076,6 +2096,15 @@ select optgroup {
 }
 
 .settings-tabs [role="tab"]::after { display: none; }
+
+/* The desktop dialog owns the sidebar surface; keep the segmented strip on mobile. */
+@media (min-width: 720px) {
+  .settings-modal .settings-tabs {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+  }
+}
 
 .widget-card {
   border-radius: 16px;
