@@ -93,6 +93,18 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
   let items = [];
   let index = 0;
   let restoreFocus = null;
+  let disposed = false;
+  let actionGeneration = 0;
+  let actionTimer = null;
+  let handoffFrame = null;
+
+  function cancelPendingAction() {
+    actionGeneration++;
+    clearTimeout(actionTimer);
+    cancelAnimationFrame(handoffFrame);
+    actionTimer = null;
+    handoffFrame = null;
+  }
 
   const click = (sel) => () => root.querySelector(sel)?.click();
 
@@ -196,13 +208,20 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
           if (menu?.getClientRects().length && !sidebar?.classList.contains("open")) menu.click();
           // The native mobile overlay schedules its own focus on the next
           // frame. Hand off after that, and re-query in case the app rendered.
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            const s = root.querySelector(".sidebar-search-input");
-            if (!s) return;
-            s.value = q;
-            s.dispatchEvent(new Event("input", { bubbles: true }));
-            s.focus();
-          }));
+          const generation = actionGeneration;
+          handoffFrame = requestAnimationFrame(() => {
+            handoffFrame = null;
+            if (disposed || generation !== actionGeneration) return;
+            handoffFrame = requestAnimationFrame(() => {
+              handoffFrame = null;
+              if (disposed || generation !== actionGeneration) return;
+              const s = root.querySelector(".sidebar-search-input");
+              if (!s) return;
+              s.value = q;
+              s.dispatchEvent(new Event("input", { bubbles: true }));
+              s.focus();
+            });
+          });
         },
       });
     }
@@ -259,10 +278,15 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
 
   function choose(i) {
     const item = items[i];
-    if (!item) return;
+    if (!item || disposed) return;
     close(false);
-    // Let the palette leave before the action opens its own UI.
-    setTimeout(() => item.run(), 30);
+    const generation = actionGeneration;
+    // Let the palette leave before the action opens its own UI. Reopening or
+    // disposing the palette supersedes the action, including its focus handoff.
+    actionTimer = setTimeout(() => {
+      actionTimer = null;
+      if (!disposed && generation === actionGeneration) item.run();
+    }, 30);
   }
 
   function onKey(event) {
@@ -285,6 +309,8 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
   }
 
   function open() {
+    if (disposed) return;
+    cancelPendingAction();
     if (overlay) return close();
     restoreFocus = document.activeElement;
     index = 0;
@@ -324,6 +350,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
   }
 
   function close(restore = true) {
+    cancelPendingAction();
     if (!overlay) return;
     const o = overlay;
     overlay = null;
@@ -362,6 +389,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     open,
     sync: ensureHint,
     dispose() {
+      disposed = true;
       window.removeEventListener("keydown", onGlobalKey, true);
       close(false);
       root.querySelectorAll(".vn-search-kbd").forEach((n) => n.remove());
