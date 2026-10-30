@@ -60,7 +60,7 @@ jobs:
           mkdir -p tools/out/ci
           # A fresh network namespace has no external interfaces or default route.
           # Drop back to the unprivileged runner before starting either child.
-          sudo unshare --net -- bash -c '
+          sudo unshare --net --pid --fork --mount-proc --kill-child=KILL -- bash -c '
             set -euo pipefail
             ip link set lo up
             exec runuser -u runner -- env PATH="$1" PLAYWRIGHT_BROWSERS_PATH="$2" \

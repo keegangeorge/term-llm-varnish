@@ -3,6 +3,8 @@ export const BASE = 'http://127.0.0.1:18080/ui/';
 const reads = new Set([
   'v1/capabilities', 'v1/providers', 'v1/models', 'v1/sessions',
   'v1/sessions/status', 'v1/sidebar', 'admin/extensions/status',
+  // Observed pinned bootstrap reads: synthetic event stream/poll and disabled-widget metadata.
+  'v1/events', 'v1/events/poll', 'admin/widgets/status',
 ]);
 export function allowedRequest(url, method) {
   if (method !== 'GET') return false;

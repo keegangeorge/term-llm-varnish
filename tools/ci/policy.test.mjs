@@ -3,16 +3,20 @@ import assert from 'node:assert/strict';
 import { BASE, allowedRequest } from './policy.mjs';
 
 test('only fixed loopback static files and explicit metadata reads', () => {
-  for (const path of ['', 'dist/app.js', 'extensions/fixture-generation/varnish/main.js', 'v1/capabilities', 'v1/sessions?limit=30']) {
+  for (const path of ['', 'dist/app.js', 'extensions/fixture-generation/varnish/main.js', 'v1/capabilities', 'v1/sessions?limit=30',
+    'v1/events', 'v1/events/poll', 'admin/widgets/status']) {
     assert.equal(allowedRequest(BASE + path, 'GET'), true, path);
   }
 });
 test('default deny mutations, providers, runtime, discovery, remote origins', () => {
   for (const method of ['POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']) {
-    assert.equal(allowedRequest(BASE + 'v1/sessions', method), false);
+    for (const path of ['v1/sessions', 'v1/events', 'v1/events/poll', 'admin/widgets/status']) {
+      assert.equal(allowedRequest(BASE + path, method), false);
+    }
   }
   for (const path of ['v1/responses', 'v1/sessions/test/runtime/compact', 'v1/sessions/test/runtime',
-    'admin/widgets/status', 'admin/extensions/reload', 'v1/projects', 'v1/mentions/search', 'v1/location',
+    'admin/widgets', 'admin/widgets/action', 'v1/events/action', 'v1/events/poll/action',
+    'admin/extensions/reload', 'v1/projects', 'v1/mentions/search', 'v1/location',
     'extensions/varnish/../../../v1/responses']) {
     assert.equal(allowedRequest(BASE + path, 'GET'), false, path);
   }

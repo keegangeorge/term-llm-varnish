@@ -22,9 +22,13 @@ try {
     const context = await browser.newContext({ ...options, serviceWorkers: 'block', permissions: [] });
     const errors = [];
     const blocked = [];
+    const reads = new Set();
     await context.route('**/*', async (route) => {
       const request = route.request();
-      if (allowedRequest(request.url(), request.method())) return route.continue();
+      if (allowedRequest(request.url(), request.method())) {
+        reads.add(new URL(request.url()).pathname);
+        return route.continue();
+      }
       // No bodies, headers, tokens, or URL queries are retained in artifacts.
       const url = new URL(request.url());
       blocked.push({ method: request.method(), origin: url.origin, path: url.pathname });
@@ -66,7 +70,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true });
+      report.results.push({ name, pass: true, reads: [...reads].sort() });
     } catch (error) {
       failed = true;
       report.results.push({ name, pass: false, error: String(error), pageErrors: errors });

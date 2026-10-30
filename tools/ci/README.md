@@ -42,7 +42,7 @@ python3 -B tools/ci/download.py /tmp/varnish-ci-bin/term-llm
 # Use that absolute binary path or the existing approved VM binary path below.
 # $USER must be the dedicated unprivileged VM account, not root.
 mkdir -p tools/out/ci
-sudo unshare --net -- bash -c '
+sudo unshare --net --pid --fork --mount-proc --kill-child=KILL -- bash -c '
   set -euo pipefail
   ip link set lo up
   exec runuser -u "$1" -- env PATH="$2" PLAYWRIGHT_BROWSERS_PATH="$3" \
@@ -69,17 +69,27 @@ namespace creation remains a separately untested setup until Actions executes.
   CSS/JS file existence and confinement, example config shape/JSON, MIT/OFL license
   presence, and the same pre-JS light-token comparison used by the existing tool.
   No formatter, strict lint rollout, app import, build, or dependency install.
+  This is a partial manifest fast precheck, not YAML validation or a substitute for
+  the real runtime loader/browser check.
 - `run.py`: checksum-gated binary; fresh temporary HOME/config/data/cache and cwd;
   explicit extension runtime copy; synthetic `{}` local settings and **empty session
   store**; debug provider; loopback only, auth none for this fixture only; projects,
   search, native search, location sharing and widgets disabled. No discovery, process
   argument scanning, provider credentials, personal settings, or personal chats.
   Children have owned process groups; readiness/browser waits and cleanup are bounded.
+  Teardown probes the group through a five-second TERM grace even if its leader
+  exits, then sends KILL. Hosted CI also uses a PID namespace with `--kill-child`
+  so descendants that create separate groups cannot outlive the fixture namespace.
+  The offline assessment container supplies its own PID namespace and is stopped
+  under the guest lock after testing; it does not validate hosted `unshare` setup.
 - Network namespace has only loopback, so neither the server nor Chromium can call
   external services at runtime. Setup downloads happen before entering it. The browser
   additionally blocks service workers, all WebSockets, all non-GET requests, external
-  origins, and API reads outside an explicit metadata allowlist. Providers/models are
-  **local metadata reads**, not provider inference calls. Unexpected requests fail the
+  origins, and API reads outside an explicit metadata/event allowlist. The pinned
+  bootstrap's GET `v1/events`, `v1/events/poll`, and `admin/widgets/status` were
+  observed in the isolated VM and are narrowly allowed; no event mutation or widget
+  action endpoint is allowed. Providers/models are **local metadata reads**, not
+  provider inference calls. Unexpected requests fail the
   check; do not casually widen the allowlist. No send, real `/compact`, runtime action,
   project/widget/search/location action, or completion mock is part of the baseline.
 - Browser coverage: real Varnish loading and shell hooks, system dark/light, mobile,
