@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 // Run against the real Appearance UI; native Tab must scroll every control into view.
-export async function checkAppearance(page) {
+export async function checkAppearance(page, resizeTo) {
   const button = page.locator('.vn-theme-btn');
   await button.click();
   const panel = page.locator('.vn-popover');
@@ -10,6 +10,10 @@ export async function checkAppearance(page) {
     const p = document.querySelector('.vn-popover');
     return p && !p.getAnimations().some((animation) => animation.playState === 'running');
   }, null, { timeout: 3000 });
+  if (resizeTo) {
+    await page.setViewportSize(resizeTo);
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  }
   const initial = await panel.evaluate((p) => {
     const rect = p.getBoundingClientRect();
     const heading = p.querySelector('.vn-popover-label').getBoundingClientRect();
