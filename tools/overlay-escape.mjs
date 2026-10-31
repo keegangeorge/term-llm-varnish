@@ -30,7 +30,7 @@ export async function checkOverlayEscape(page) {
     await palette.waitFor({ state: "detached" });
     const afterPalette = await snapshot();
     assert.equal(afterPalette.picker, true, "only the foreground dialog closes");
-    assert.equal(afterPalette.focusInPicker, true, "focus returns to the picker");
+    assert.equal(afterPalette.focusInPicker, true, `focus returns to the picker (${dismissal}): ${JSON.stringify(afterPalette)}`);
     assert.equal(await page.evaluate(el => document.activeElement === el, origin), true);
     await origin.dispose();
     await page.keyboard.press("Escape");
