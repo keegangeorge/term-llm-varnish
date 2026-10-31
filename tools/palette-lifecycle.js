@@ -21,6 +21,45 @@ export function runPaletteLifecycleTests(createPalette) {
   const results = [];
   let palette, root;
   try {
+    for (const activation of ["keyboard", "pointer"]) {
+      for (const interruption of ["none", "dispose", "reopen"]) {
+        timers.clear(); frames.clear();
+        root = document.createElement("section");
+        root.innerHTML = '<div class="composer"><textarea class="prompt"></textarea></div><button id="settingsBtn">Settings</button>';
+        document.body.append(root);
+        const origin = root.querySelector("textarea");
+        let clicks = 0, capturedFocus = null;
+        root.querySelector("#settingsBtn").addEventListener("click", () => {
+          clicks++;
+          capturedFocus = document.activeElement;
+        });
+        origin.focus();
+        palette = createPalette(root, { theme: { scheme: "dark", type: "compact", accent: "indigo" }, thread: {} });
+        palette.open();
+        const input = document.querySelector(".vn-pal-overlay:not([data-leaving]) .vn-pal-input");
+        input.value = "Open settings";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        if (activation === "keyboard") input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        else [...document.querySelectorAll(".vn-pal-overlay:not([data-leaving]) .vn-pal-item")].find((item) => item.querySelector(".vn-pal-title")?.textContent === "Open settings").click();
+        const actions = [...timers.values()].filter((entry) => entry.delay === 30);
+        assert(actions.length === 1, "Exactly one pending settings action");
+        const stale = actions[0].callback;
+        if (interruption === "dispose") { palette.dispose(); origin.focus(); }
+        else if (interruption === "reopen") palette.open();
+        const focus = document.activeElement;
+        stale(); // Also exercise an already-dequeued callback after cancellation.
+        if (interruption === "none") {
+          assert(clicks === 1 && capturedFocus === origin, `${activation}: native settings captures palette origin`);
+          assert(document.activeElement === origin, `${activation}: focused origin survives action dispatch`);
+        } else {
+          assert(clicks === 0 && document.activeElement === focus, `${activation}/${interruption}: no stale settings click or focus steal`);
+        }
+        palette.dispose();
+        root.remove(); root = null;
+        document.querySelectorAll(".vn-pal-overlay[data-leaving]").forEach((node) => node.remove());
+        results.push(`settings/${activation}/${interruption}`);
+      }
+    }
     for (const interruption of ["dispose", "reopen"]) {
       for (const stage of ["timer", "first-frame", "second-frame"]) {
         timers.clear(); frames.clear();

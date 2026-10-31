@@ -123,7 +123,13 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     // Actions
     const actions = [
       ["New chat", "", click("#newChatBtn")],
-      ["Open settings", "", click("#settingsBtn")],
+      ["Open settings", "", () => {
+        // The native modal remembers the focused element as its return target.
+        // Restore the palette's origin before opening it, not the departing input
+        // (or body under reduced motion). The native trigger can be hidden on mobile.
+        if (restoreFocus?.isConnected) restoreFocus.focus({ preventScroll: true });
+        root.querySelector("#settingsBtn")?.click();
+      }],
       ["Open widgets", "", click("#widgetsOpenBtn")],
       ["Toggle sidebar", "", () => (root.querySelector("#sidebarPanelToggleBtn") || root.querySelector("#sidebarToggleBtn") || root.querySelector("#mobileMenuBtn"))?.click()],
       ["Toggle file changes panel", "", click("#diffToggleBtn")],
