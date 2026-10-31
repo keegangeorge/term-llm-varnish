@@ -1170,6 +1170,9 @@ a {
   position: fixed;
   z-index: 1100;
   width: 268px;
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px;
   border-radius: 18px;
   background: var(--vn-glass-strong);
@@ -3802,6 +3805,7 @@ input[type="radio"] { accent-color: var(--vn-accent); }
     top: auto !important;
     bottom: max(0.5rem, var(--safe-bottom)) !important;
     width: auto;
+    max-height: calc(100dvh - max(0.5rem, var(--safe-bottom)) - 0.5rem);
     padding: 16px 16px calc(16px + var(--safe-bottom));
     border-radius: 26px;
     transform-origin: bottom center;

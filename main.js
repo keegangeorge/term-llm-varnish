@@ -222,7 +222,8 @@ function createThemePicker(theme, mount) {
     const r = anchor.getBoundingClientRect();
     const width = popover.offsetWidth || 268;
     const left = Math.max(8, Math.min(window.innerWidth - width - 8, r.right - width));
-    popover.style.top = `${Math.round(r.bottom + 8)}px`;
+    const top = Math.max(8, Math.min(r.bottom + 8, window.innerHeight - popover.offsetHeight - 8));
+    popover.style.top = `${Math.round(top)}px`;
     popover.style.left = `${Math.round(left)}px`;
   }
 
