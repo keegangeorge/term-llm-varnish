@@ -302,7 +302,12 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     ]);
     overlay = el("div", { class: "vn-pal-overlay" }, [panel]);
     overlay.addEventListener("pointerdown", (e) => {
-      if (e.target === overlay) close();
+      if (e.target === overlay) {
+        // Removing the backdrop must not let the pointer's default focus action
+        // overwrite the origin restored by close().
+        e.preventDefault();
+        close();
+      }
     });
     input.addEventListener("input", () => {
       index = 0;
