@@ -32,8 +32,8 @@ export async function checkAppearance(page, resizeTo) {
     const reachable = await controls.nth(index).evaluate((control) => {
       const r = control.getBoundingClientRect();
       const p = control.closest('.vn-popover').getBoundingClientRect();
-      return control === document.activeElement && r.top >= Math.max(0, p.top) &&
-        r.bottom <= Math.min(innerHeight, p.bottom) && r.left >= 0 && r.right <= innerWidth;
+      return control === document.activeElement && r.top >= Math.max(0, p.top) + 3 &&
+        r.bottom <= Math.min(innerHeight, p.bottom) - 3 && r.left >= 0 && r.right <= innerWidth;
     });
     assert(reachable, `Appearance control ${index} must be focused and visible via Tab`);
     if (index + 1 < count) await page.keyboard.press('Tab');
