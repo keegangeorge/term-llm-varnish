@@ -21,6 +21,7 @@ import { createRequire } from "module";
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { checkOverlayEscape } from "./overlay-escape.mjs";
 
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const REPO = path.resolve(HERE, "..");
@@ -145,6 +146,9 @@ try {
   await shot(p, "palette", "Command palette");
   await p.keyboard.press("Escape");
   await p.waitForTimeout(300);
+
+  await checkOverlayEscape(p);
+  ok("foreground palette owns Escape above Appearance", true);
 
   await p.click("#newChatBtn");
   await p.waitForTimeout(900);

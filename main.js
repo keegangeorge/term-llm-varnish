@@ -164,7 +164,7 @@ function createThemePicker(theme, mount) {
     popover = null;
     backdrop = null;
     anchor?.setAttribute("aria-expanded", "false");
-    document.removeEventListener("keydown", onKey, true);
+    document.removeEventListener("keydown", onKey);
     if (restoreFocus) anchor?.focus({ preventScroll: true });
     if (reducedMotion.matches) {
       p.remove();
@@ -298,7 +298,8 @@ function createThemePicker(theme, mount) {
     mount.append(backdrop, popover);
     position();
     button.setAttribute("aria-expanded", "true");
-    document.addEventListener("keydown", onKey, true);
+    // Foreground dialogs handle Escape before the underlying picker sees it.
+    document.addEventListener("keydown", onKey);
     popover.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
   }
 
