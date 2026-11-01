@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
-const source = fs.readFileSync(new URL('../arrivals.js', import.meta.url), 'utf8');
+const source = fs.readFileSync(new URL('../../arrivals.js', import.meta.url), 'utf8');
 const { createArrivalTracker } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 const record = (id, content = '') => ({ id, content });
 const baseline = () => {
@@ -10,7 +10,7 @@ const baseline = () => {
   return tracker;
 };
 test('installer ships the tracker imported by thread', () => {
-  const installer = fs.readFileSync(new URL('../install.sh', import.meta.url), 'utf8');
+  const installer = fs.readFileSync(new URL('../../install.sh', import.meta.url), 'utf8');
   const files = installer.match(/^FILES=\(([^\n]+)\)/m)?.[1].split(/\s+/);
   assert(files?.includes('arrivals.js'));
 });
