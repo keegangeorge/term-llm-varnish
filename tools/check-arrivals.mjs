@@ -9,6 +9,11 @@ const baseline = () => {
   assert.equal(tracker.observe('/chat/a', [record('1', 'Hello')]), false);
   return tracker;
 };
+test('installer ships the tracker imported by thread', () => {
+  const installer = fs.readFileSync(new URL('../install.sh', import.meta.url), 'utf8');
+  const files = installer.match(/^FILES=\(([^\n]+)\)/m)?.[1].split(/\s+/);
+  assert(files?.includes('arrivals.js'));
+});
 test('initial hydration and unchanged rerender are not arrivals', () => {
   const tracker = baseline();
   assert.equal(tracker.observe('/chat/a', [record('1', 'Hello')]), false);
