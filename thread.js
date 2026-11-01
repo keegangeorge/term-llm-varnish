@@ -224,7 +224,9 @@ export function createThread(root) {
     if (!jump || !scroller) return;
     const away = distanceFromBottom() > 480;
     if (!away) jump.removeAttribute("data-new");
-    jump.querySelector(".vn-jump-label").textContent = jump.hasAttribute("data-new") ? "New messages" : "Latest";
+    const label = jump.querySelector(".vn-jump-label");
+    const text = jump.hasAttribute("data-new") ? "New messages" : "Latest";
+    if (label.textContent !== text) label.textContent = text;
     jump.toggleAttribute("data-show", away);
     jump.tabIndex = away ? 0 : -1;
   }

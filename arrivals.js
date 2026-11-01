@@ -26,7 +26,7 @@ export function transcriptRecords(root) {
   const nodes = [...root.querySelectorAll(".messages > [data-message-id]")];
   const records = nodes.map((record) => ({ id: record.dataset.messageId, content: "" }));
   const tail = nodes.at(-1);
-  const content = tail?.querySelector(":scope > .message-body > .markdown-body, :scope > .message-body > .message-text, .tool-group-summary");
+  const content = tail?.querySelector(":scope > .message-body > .markdown-body:not(.compaction-raw), :scope > .message-body > .message-text, .tool-group-summary");
   const copy = content?.cloneNode(true);
   copy?.querySelectorAll("button, .vn-code-head").forEach((node) => node.remove());
   if (records.length) records.at(-1).content = copy?.textContent ?? "";
