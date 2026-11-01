@@ -252,6 +252,8 @@ export function createThread(root) {
         el("span", { class: "vn-jump-label", text: "Latest" }),
       ]);
       jump.addEventListener("click", () => {
+        jump.removeAttribute("data-new");
+        updateJump();
         scroller?.scrollTo({ top: scroller.scrollHeight, behavior: reducedMotion.matches ? "auto" : "smooth" });
       });
     }
