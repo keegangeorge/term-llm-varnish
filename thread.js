@@ -5,6 +5,7 @@
 // small self-owned elements; nothing app-owned is moved or rewritten.
 
 import { KEYS, read, write, el, isRunning, formatDuration, reducedMotion } from "./util.js";
+import { createArrivalTracker, transcriptRecords } from "./arrivals.js";
 
 const SVG = {
   wrap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h13a3 3 0 0 1 0 6h-4"/><path d="m15 16-2 2 2 2"/><path d="M4 18h5"/></svg>',
@@ -212,7 +213,8 @@ export function createThread(root) {
   let jump = null;
   let scroller = null;
   let main = null;
-  let lastHeight = 0;
+  const arrivals = createArrivalTracker();
+  let session = null;
 
   function distanceFromBottom() {
     return scroller ? scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight : 0;
@@ -222,6 +224,7 @@ export function createThread(root) {
     if (!jump || !scroller) return;
     const away = distanceFromBottom() > 480;
     if (!away) jump.removeAttribute("data-new");
+    jump.querySelector(".vn-jump-label").textContent = jump.hasAttribute("data-new") ? "New messages" : "Latest";
     jump.toggleAttribute("data-show", away);
     jump.tabIndex = away ? 0 : -1;
   }
@@ -237,7 +240,8 @@ export function createThread(root) {
       scroller?.removeEventListener("scroll", onScroll);
       scroller = nextScroller;
       scroller?.addEventListener("scroll", onScroll, { passive: true });
-      lastHeight = scroller?.scrollHeight ?? 0;
+      arrivals.reset();
+      jump?.removeAttribute("data-new");
     }
     if (!nextMain) return;
     if (!jump) {
@@ -253,16 +257,16 @@ export function createThread(root) {
       main = nextMain;
       main.append(jump);
     }
-    // New content while scrolled away: say so.
-    if (scroller) {
-      const h = scroller.scrollHeight;
-      if (h > lastHeight + 4 && distanceFromBottom() > 480) {
-        jump.setAttribute("data-new", "");
-        jump.querySelector(".vn-jump-label").textContent = "New messages";
-      } else if (!jump.hasAttribute("data-new")) {
-        jump.querySelector(".vn-jump-label").textContent = "Latest";
-      }
-      lastHeight = h;
+    // The host reuses its scroller between chats. A different route is a new
+    // baseline, never unread activity carried over from the previous session.
+    const nextSession = location.pathname;
+    if (session !== nextSession) {
+      session = nextSession;
+      arrivals.reset();
+      jump.removeAttribute("data-new");
+    }
+    if (arrivals.observe(session, transcriptRecords(root)) && distanceFromBottom() > 480) {
+      jump.setAttribute("data-new", "");
     }
     updateJump();
   }
