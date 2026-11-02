@@ -318,13 +318,31 @@ function createThemePicker(theme, mount) {
     row.append(button);
   }
 
-  window.addEventListener("resize", position);
+  function onResize() {
+    position();
+    const focused = document.activeElement;
+    if (!popover || !popover.contains(focused)) return;
+    // Resizing does not refocus a control, so native focus scrolling will not
+    // reveal it when the panel becomes shorter. Scroll only this panel and
+    // retain the same focused node, leaving room for its focus outline.
+    const panelRect = popover.getBoundingClientRect();
+    const controlRect = focused.getBoundingClientRect();
+    const top = panelRect.top + popover.clientTop + 4;
+    const bottom = panelRect.top + popover.clientTop + popover.clientHeight - 4;
+    if (controlRect.bottom > bottom) {
+      popover.scrollTop += controlRect.bottom - bottom;
+    } else if (controlRect.top < top) {
+      popover.scrollTop -= top - controlRect.top;
+    }
+  }
+
+  window.addEventListener("resize", onResize);
 
   return {
     ensureButton,
     dispose() {
       close({ restoreFocus: false });
-      window.removeEventListener("resize", position);
+      window.removeEventListener("resize", onResize);
       document.querySelectorAll(".vn-theme-btn").forEach((b) => b.remove());
     },
   };
