@@ -47,11 +47,11 @@ export async function checkAppearance(page, resizeTo) {
       const preserved = await page.evaluate(({ focused, samePanel }) => {
         const r = focused.getBoundingClientRect();
         const p = samePanel.getBoundingClientRect();
-        return samePanel === document.querySelector('.vn-popover') && focused.isConnected &&
-          focused === document.activeElement && p.top >= 7 && p.bottom <= innerHeight - 7 &&
-          r.top >= Math.max(0, p.top) + 3 && r.bottom <= Math.min(innerHeight, p.bottom) - 3;
+        return { samePanel: samePanel === document.querySelector('.vn-popover'), connected: focused.isConnected,
+          focused: focused === document.activeElement, top: p.top, bottom: p.bottom,
+          controlTop: r.top, controlBottom: r.bottom, height: innerHeight, scrollTop: samePanel.scrollTop }; 
       }, { focused, samePanel });
-      assert(preserved, 'Same open Appearance panel retains visible focused control across resize');
+      assert(preserved.samePanel && preserved.connected && preserved.focused && preserved.top >= 7 && preserved.bottom <= preserved.height - 7 && preserved.controlTop >= Math.max(0, preserved.top) + 3 && preserved.controlBottom <= Math.min(preserved.height, preserved.bottom) - 3, `Same open Appearance panel retains visible focused control across resize: ${JSON.stringify({ viewport, ...preserved })}`);
     }
   }
   await page.keyboard.press('Escape');
