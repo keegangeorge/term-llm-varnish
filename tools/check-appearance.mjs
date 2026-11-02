@@ -44,6 +44,12 @@ export async function checkAppearance(page, resizeTo) {
     for (const viewport of [{ width: 568, height: 320 }, { width: 844, height: 320 }, { width: 1440, height: 900 }]) {
       await page.setViewportSize(viewport);
       await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      // Crossing the mobile breakpoint starts the existing sheet-entry animation.
+      // Inspect the settled same panel, not its intentional offscreen entry frame.
+      await page.waitForFunction(() => {
+        const p = document.querySelector('.vn-popover');
+        return p && !p.getAnimations().some((animation) => animation.playState === 'running');
+      }, null, { timeout: 3000 });
       const preserved = await page.evaluate(({ focused, samePanel }) => {
         const r = focused.getBoundingClientRect();
         const p = samePanel.getBoundingClientRect();
