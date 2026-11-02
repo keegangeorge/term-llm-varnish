@@ -38,6 +38,22 @@ export async function checkAppearance(page, resizeTo) {
     assert(reachable, `Appearance control ${index} must be focused and visible via Tab`);
     if (index + 1 < count) await page.keyboard.press('Tab');
   }
+  if (resizeTo) {
+    const focused = await controls.last().elementHandle();
+    const samePanel = await panel.elementHandle();
+    for (const viewport of [{ width: 568, height: 320 }, { width: 844, height: 320 }, { width: 1440, height: 900 }]) {
+      await page.setViewportSize(viewport);
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const preserved = await page.evaluate(({ focused, samePanel }) => {
+        const r = focused.getBoundingClientRect();
+        const p = samePanel.getBoundingClientRect();
+        return samePanel === document.querySelector('.vn-popover') && focused.isConnected &&
+          focused === document.activeElement && p.top >= 7 && p.bottom <= innerHeight - 7 &&
+          r.top >= Math.max(0, p.top) + 3 && r.bottom <= Math.min(innerHeight, p.bottom) - 3;
+      }, { focused, samePanel });
+      assert(preserved, 'Same open Appearance panel retains visible focused control across resize');
+    }
+  }
   await page.keyboard.press('Escape');
   await panel.waitFor({ state: 'hidden' });
   assert(await button.evaluate((b) => b === document.activeElement), 'Escape restores Appearance trigger focus');
