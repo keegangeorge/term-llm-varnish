@@ -13,6 +13,8 @@ test('installer ships the tracker imported by thread', () => {
   const installer = fs.readFileSync(new URL('../../install.sh', import.meta.url), 'utf8');
   const files = installer.match(/^FILES=\(([^\n]+)\)/m)?.[1].split(/\s+/);
   assert(files?.includes('arrivals.js'));
+  const runner = fs.readFileSync(new URL('./run.py', import.meta.url), 'utf8');
+  assert(runner.includes("'arrivals.js'"), 'isolated CI runtime ships the imported tracker too');
 });
 test('initial hydration and unchanged rerender are not arrivals', () => {
   const tracker = baseline();
