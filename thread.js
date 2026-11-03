@@ -215,6 +215,10 @@ export function createThread(root) {
   let main = null;
   const arrivals = createArrivalTracker();
   let session = null;
+  // Attribute-only media/link updates and in-place text streaming do not reach
+  // the main child-list observer. Observe the scroller without redecoration;
+  // signatures exclude layout/disclosure controls, and the jump is its sibling.
+  const contentObserver = new MutationObserver(() => ensureJump());
 
   function distanceFromBottom() {
     return scroller ? scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight : 0;
@@ -240,8 +244,15 @@ export function createThread(root) {
     const nextScroller = nextMain?.querySelector(":scope > .chat-scroll");
     if (nextScroller !== scroller) {
       scroller?.removeEventListener("scroll", onScroll);
+      contentObserver.disconnect();
       scroller = nextScroller;
       scroller?.addEventListener("scroll", onScroll, { passive: true });
+      if (scroller) contentObserver.observe(scroller, {
+        attributes: true,
+        attributeFilter: ["href", "title", "src", "srcset", "alt", "poster", "type", "kind", "srclang", "label"],
+        characterData: true,
+        subtree: true,
+      });
       arrivals.reset();
       jump?.removeAttribute("data-new");
     }
@@ -357,6 +368,7 @@ export function createThread(root) {
     sync,
     runSlash,
     dispose() {
+      contentObserver.disconnect();
       scroller?.removeEventListener("scroll", onScroll);
       jump?.remove();
       root.querySelectorAll(".vn-code-head, .vn-user-actions, .vn-empty").forEach((n) => n.remove());
