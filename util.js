@@ -145,6 +145,13 @@ export function currentProviderSync() {
   return selected ? { name: selected, type: selected } : null;
 }
 
+// Provider type for a provider name ("" means the server default).
+export function providerTypeSync(name) {
+  const list = providersCache ?? [];
+  const match = name ? list.find((p) => p.name === name) : list.find((p) => p.is_default);
+  return match ? match.type || match.name : name || "";
+}
+
 /* ------------------------------------------------------------- misc */
 
 export function el(tag, attrs = {}, children = []) {

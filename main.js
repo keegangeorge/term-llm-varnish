@@ -7,8 +7,9 @@
 
 import {
   KEYS, ACCENTS, NODE_ID, html, reducedMotion, read, write, nodeAccent,
-  setApiPrefix, loadLocalConfig, NODE_ICONS,
+  setApiPrefix, loadLocalConfig, NODE_ICONS, currentProviderSync, loadProviders, providerTypeSync,
 } from "./util.js";
+import { logoKey, logoSvg } from "./logos.js";
 import { createThread } from "./thread.js";
 import { createComposerExtras } from "./composer.js";
 import { createPalette } from "./palette.js";
@@ -363,12 +364,15 @@ function createComposerBar(root) {
     chip.className = "vn-chip vn-chip-runtime";
     chip.setAttribute("aria-haspopup", "dialog");
     chip.innerHTML =
-      `${ICONS.sparkle}<span class="vn-chip-label vn-chip-model-label"></span>` +
+      `<span class="vn-chip-mark" aria-hidden="true">${ICONS.sparkle}</span>` +
+      '<span class="vn-chip-label vn-chip-model-label"></span>' +
       '<span class="vn-chip-sep" aria-hidden="true"></span>' +
       '<span class="vn-meter" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' +
       `<span class="vn-chip-label vn-chip-effort-label"></span>${ICONS.caret}`;
     chip.addEventListener("click", openRuntime);
     bar.append(chip);
+    // Provider list is fetched once; re-sync so the mark can use it.
+    loadProviders().then(() => sync());
   }
 
   function openRuntime() {
@@ -404,6 +408,13 @@ function createComposerBar(root) {
 
     const modelLabel = chip.querySelector(".vn-chip-model-label");
     if (modelLabel.textContent !== model) modelLabel.textContent = model;
+    // Provider silhouette (falls back to the sparkle for unknown models).
+    const logo = logoKey(model, currentProviderSync()?.type ?? "") ?? "sparkle";
+    const mark = chip.querySelector(".vn-chip-mark");
+    if (mark.dataset.logo !== logo) {
+      mark.dataset.logo = logo;
+      mark.innerHTML = logo === "sparkle" ? ICONS.sparkle : logoSvg(logo);
+    }
     const effortLabel = chip.querySelector(".vn-chip-effort-label");
     const effortText = level === "auto" ? "Auto effort" : effort.label;
     if (effortLabel.textContent !== effortText) effortLabel.textContent = effortText;
@@ -420,10 +431,49 @@ function createComposerBar(root) {
     }
     lastKey = key;
 
+    decoratePopover(model);
+
     chip.setAttribute("aria-label", `Model ${model}, effort ${effort.label}. Change model and effort`);
     chip.title = disabled ? "Locked while a reply is running" : "Model and effort";
     chip.disabled = disabled;
     if (chip.getAttribute("aria-expanded") !== expanded) chip.setAttribute("aria-expanded", expanded);
+  }
+
+  // Same accent marks inside the runtime popover, beside the chosen provider
+  // and model. Options are native <select>s, so marks sit on the field, not
+  // on each option.
+  function decoratePopover(model) {
+    const pop = root.querySelector(".chip-popover-runtime");
+    if (!pop) return;
+    // The popover's own Provider field is the source of truth here.
+    const providerSelect = pop.querySelector('select[aria-label="Provider"]');
+    const providerType = providerSelect
+      ? providerTypeSync(providerSelect.value)
+      : (currentProviderSync()?.type ?? "");
+    const marks = [
+      ['select[aria-label="Provider"]', logoKey("", providerType)],
+      ['select[aria-label="Runtime model"]', logoKey(model, providerType)],
+    ];
+    for (const [selector, key] of marks) {
+      const select = pop.querySelector(selector);
+      const field = select?.closest(".runtime-popover-field");
+      if (!field) continue;
+      let mark = field.querySelector(":scope > .vn-field-mark");
+      if (!key) {
+        mark?.remove();
+        continue;
+      }
+      if (!mark) {
+        mark = document.createElement("span");
+        mark.className = "vn-field-mark";
+        mark.setAttribute("aria-hidden", "true");
+        select.before(mark);
+      }
+      if (mark.dataset.logo !== key) {
+        mark.dataset.logo = key;
+        mark.innerHTML = logoSvg(key);
+      }
+    }
   }
 
   return {
