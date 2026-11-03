@@ -164,7 +164,7 @@ function createThemePicker(theme, mount) {
     popover = null;
     backdrop = null;
     anchor?.setAttribute("aria-expanded", "false");
-    document.removeEventListener("keydown", onKey, true);
+    document.removeEventListener("keydown", onKey);
     if (restoreFocus) anchor?.focus({ preventScroll: true });
     if (reducedMotion.matches) {
       p.remove();
@@ -187,7 +187,6 @@ function createThemePicker(theme, mount) {
   function render() {
     const schemeIndex = SCHEMES.findIndex((s) => s.id === theme.scheme);
     const accentName = ACCENTS.find((a) => a.id === theme.accent)?.name ?? "";
-    const isLight = theme.resolved === "light";
     popover.innerHTML = `
       <span class="vn-popover-label" id="vn-appearance-label">Appearance</span>
       <div class="vn-segment" role="radiogroup" aria-labelledby="vn-appearance-label" style="--vn-seg-index:${schemeIndex}">
@@ -206,7 +205,7 @@ function createThemePicker(theme, mount) {
       <span class="vn-popover-label" id="vn-accent-label">Accent color</span>
       <div class="vn-swatches" role="radiogroup" aria-labelledby="vn-accent-label">
         ${ACCENTS.map(
-          (a) => `<button type="button" class="vn-swatch" role="radio" data-accent="${a.id}" aria-label="${a.name}" title="${a.name}" aria-checked="${a.id === theme.accent}" style="--sw:${isLight ? a.light : a.dark}"></button>`,
+          (a) => `<button type="button" class="vn-swatch" role="radio" data-accent="${a.id}" aria-label="${a.name}" title="${a.name}" aria-checked="${a.id === theme.accent}" style="--sw-light:${a.light};--sw-dark:${a.dark}"></button>`,
         ).join("")}
       </div>
       <div class="vn-swatch-name" aria-live="polite">${accentName}</div>
@@ -261,7 +260,6 @@ function createThemePicker(theme, mount) {
       } else if (schemeBtn) {
         theme.setScheme(schemeBtn.dataset.scheme);
         const focusId = schemeBtn.dataset.scheme;
-        // Re-render after the colours settle so swatches pick up the new scheme.
         popover.querySelectorAll("[data-scheme]").forEach((b) =>
           b.setAttribute("aria-checked", String(b.dataset.scheme === focusId)),
         );
@@ -269,11 +267,6 @@ function createThemePicker(theme, mount) {
           "--vn-seg-index",
           String(SCHEMES.findIndex((s) => s.id === focusId)),
         );
-        const isLight = theme.resolved === "light";
-        popover.querySelectorAll("[data-accent]").forEach((b) => {
-          const a = ACCENTS.find((x) => x.id === b.dataset.accent);
-          b.style.setProperty("--sw", isLight ? a.light : a.dark);
-        });
       } else if (accentBtn) {
         theme.setAccent(accentBtn.dataset.accent);
         popover.querySelectorAll("[data-accent]").forEach((b) =>
@@ -299,7 +292,8 @@ function createThemePicker(theme, mount) {
     mount.append(backdrop, popover);
     position();
     button.setAttribute("aria-expanded", "true");
-    document.addEventListener("keydown", onKey, true);
+    // Foreground dialogs handle Escape before the underlying picker sees it.
+    document.addEventListener("keydown", onKey);
     popover.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true });
   }
 
