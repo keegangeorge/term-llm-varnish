@@ -11,10 +11,12 @@ export function createArrivalTracker() {
         if (tail.id === previous.tail.id) {
           arrived = tail.content !== previous.tail.content;
         } else {
-          arrived = records.some((record) => record.id === previous.tail.id);
+          const oldTailIndex = records.findIndex((record) => record.id === previous.tail.id);
+          arrived = oldTailIndex >= 0 && records.slice(oldTailIndex + 1)
+            .some((record) => !previous.ids.has(record.id));
         }
       }
-      previous = { session, tail };
+      previous = { session, tail, ids: new Set(records.map((record) => record.id)) };
       return arrived;
     },
   };
@@ -26,9 +28,12 @@ export function transcriptRecords(root) {
   const nodes = [...root.querySelectorAll(".messages > [data-message-id]")];
   const records = nodes.map((record) => ({ id: record.dataset.messageId, content: "" }));
   const tail = nodes.at(-1);
-  const content = tail?.querySelector(":scope > .message-body > .markdown-body:not(.compaction-raw), :scope > .message-body > .message-text, .tool-group-summary");
-  const copy = content?.cloneNode(true);
-  copy?.querySelectorAll("button, .vn-code-head").forEach((node) => node.remove());
-  if (records.length) records.at(-1).content = copy?.textContent ?? "";
+  const contents = tail?.querySelectorAll(":scope > .message-body > .markdown-body:not(.compaction-raw), :scope > .message-body > .message-text, :scope > .tool-group-card > .tool-group-toggle > .tool-group-summary") ?? [];
+  const text = [...contents].map((content) => {
+    const copy = content.cloneNode(true);
+    copy.querySelectorAll("button, .vn-code-head").forEach((node) => node.remove());
+    return copy.textContent;
+  });
+  if (records.length) records.at(-1).content = JSON.stringify(text);
   return records;
 }

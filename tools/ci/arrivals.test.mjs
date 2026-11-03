@@ -45,6 +45,13 @@ test('empty state and reset establish fresh baselines', () => {
   tracker.reset();
   assert.equal(tracker.observe('/chat/a', [record('1', 'Fresh')]), false);
 });
+test('reordering known records and tail removal are not arrivals', () => {
+  const tracker = createArrivalTracker();
+  tracker.observe('/chat/a', [record('1'), record('2'), record('3')]);
+  assert.equal(tracker.observe('/chat/a', [record('1'), record('3'), record('2')]), false);
+  assert.equal(tracker.observe('/chat/a', [record('1'), record('3')]), false);
+  assert.equal(tracker.observe('/chat/a', [record('1'), record('3'), record('4')]), true);
+});
 test('tool summary progress is observable without disclosure contents', () => {
   const tracker = createArrivalTracker();
   tracker.observe('/chat/a', [record('tool-1', '2 tool calls · read_file, grep')]);
