@@ -27,7 +27,7 @@ function escapeXml(value) {
   return String(value).replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[c]);
 }
 
-// The glyph lives in style.css as a mask URL; reuse it so the two never drift.
+// The glyph lives in style.css as a white data URL; reuse it so the two never drift.
 function glyphFrom(icon) {
   const raw = getComputedStyle(icon).getPropertyValue("--vn-glyph").trim();
   const match = raw.match(/^url\(\s*["']?data:image\/svg\+xml,([\s\S]*?)["']?\s*\)$/);
@@ -45,7 +45,6 @@ export function tileSvg({ accentId, kind, glyph, initials }) {
   let mark;
   if (kind !== "monogram" && glyph.startsWith("<svg")) {
     mark = glyph
-      .replace(/black/g, "white")
       .replace(/stroke-width='[\d.]+'/, "stroke-width='2.6'") // a touch bolder at 16px
       .replace("<svg", "<svg x='13' y='13' width='38' height='38'");
   } else {
