@@ -94,7 +94,10 @@ namespace creation remains a separately untested setup until Actions executes.
   project/widget/search/location action, or completion mock is part of the baseline.
 - Browser coverage: real Varnish loading and shell hooks, system dark/light, mobile,
   actual keyboard palette open/filter/arrow/Enter/Escape, and opening/closing the real
-  settings UI through its safe palette command. No required chat rows/groups or
+  settings UI through its safe palette command. Appearance checks cover bounded
+  panel/heading geometry, native Tab reachability of every control, and Escape
+  focus restoration, including short mobile and desktop viewports and resizing
+  an already-open desktop panel. No required chat rows/groups or
   conditional generation/thread controls. Screenshots are evidence, **not** a pixel
   regression oracle. Selector and metadata compatibility still require the VM run.
 - Only `tools/out/ci/` is uploaded (always, including failures; three-day retention).
