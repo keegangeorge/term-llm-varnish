@@ -19,8 +19,9 @@ Varnish combines frosted surfaces, soft accent lighting, Geist typography, and a
 
 ### A quieter composer
 
-- A rounded, chat-first composer with a compact model/effort chip that opens term-llm's own runtime controls.
-- A context-usage ring when the server exposes context data, with token details on hover.
+- A rounded, chat-first composer whose controls share one height, with a compact model/effort chip (showing the model maker's mark in the accent colour, also beside the provider and model in its popover) that opens term-llm's own runtime controls.
+- A context-usage ring when the server exposes context data, with token details on hover. Near the limit, a **Compact** button runs `/compact` in one click and keeps your draft.
+- Toolbar labels give way in a fixed order as the composer narrows (effort text, then context, then model name), so icons and meters never get squeezed.
 - A rainbow highlight for `ultrathink` when the selected provider is `claude-bin`. This is a visual cue, not a new model capability or an effort override.
 - A glass live-voice card above the composer: an accent orb that breathes while listening, ripples while speaking, and spins a halo while connecting or working, with the live transcript in a quiet inset and a red Stop pill. The dictation strip gets the same finish. Styling only; live voice itself is term-llm's.
 
@@ -196,7 +197,8 @@ The live preview injects the live-voice panel markup in every phase (connecting,
 | `main.js` | Appearance, sidebar, composer controls, lifecycle |
 | `util.js` | Preferences, node accents, same-origin API helpers |
 | `thread.js` | Conversation, code, timeline, new-chat additions |
-| `composer.js` | Context usage and ultrathink highlighting |
+| `composer.js` | Context usage, Compact button and ultrathink highlighting |
+| `logos.js` | Provider marks for the model chip (Simple Icons, CC0) |
 | `palette.js` | Keyboard command palette |
 | `notify.js` | Background-tab title/favicon signals |
 | `favicon.js` | Per-node tab icon under a Hub |

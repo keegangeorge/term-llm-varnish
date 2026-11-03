@@ -1675,6 +1675,10 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
 .composer-inner { max-width: 768px; }
 
 .composer-box {
+  /* One height for every toolbar control (buttons, chips, Stop). */
+  --vn-ctl: 32px;
+  /* Toolbar labels collapse by the composer's own width (see below). */
+  container: vn-composer / inline-size;
   /* Paseo layout: prompt on top, a toolbar of controls beneath. */
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: auto auto auto;
@@ -1694,7 +1698,7 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
 .composer-box > .prompt { grid-column: 1 / -1; grid-row: 2; }
 .composer-box > .attach-btn { grid-column: 1; grid-row: 3; margin: 0; }
 .composer-box > .vn-composer-bar { grid-column: 2; grid-row: 3; }
-.composer-box > .composer-actions { grid-column: 3; grid-row: 3; }
+.composer-box > .composer-actions { grid-column: 3; grid-row: 3; margin: 0; }
 
 .composer-box:focus-within {
   border-color: color-mix(in srgb, var(--vn-accent) 40%, var(--vn-glass-border));
@@ -1712,11 +1716,11 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
 .prompt::placeholder { color: var(--vn-text-subtle); }
 
 .composer-icon-btn {
-  width: 34px;
-  height: 34px;
+  width: var(--vn-ctl);
+  height: var(--vn-ctl);
   margin: 0;
   color: var(--text-muted);
-  border-radius: 12px;
+  border-radius: 999px;
   transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease,
     transform var(--vn-med) var(--vn-spring);
 }
@@ -1736,8 +1740,8 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
 .composer-actions { gap: 6px; }
 
 .send-btn {
-  width: 34px;
-  height: 34px;
+  width: var(--vn-ctl);
+  height: var(--vn-ctl);
   margin: 0;
   background: var(--vn-accent);
   color: var(--vn-on-accent);
@@ -1757,18 +1761,22 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
 }
 
 .send-btn:disabled { opacity: 0.3; box-shadow: none; }
-.send-btn svg { width: 17px; height: 17px; }
+.send-btn svg { width: 16px; height: 16px; }
 
 .send-btn .arrow,
 .send-btn svg { transition: transform var(--vn-med) var(--vn-spring); }
 
 .stop-btn {
+  /* Same height, hairline and type as the model chip, tinted red. */
+  border: 0;
   border-radius: 999px;
-  height: 32px;
+  height: var(--vn-ctl);
+  min-height: var(--vn-ctl);
+  padding: 0 12px;
   font-size: 0.75rem;
   font-weight: 550;
   background: color-mix(in srgb, var(--danger) 10%, transparent);
-  border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 28%, transparent);
   transition: background-color var(--vn-fast) ease,
     transform var(--vn-med) var(--vn-spring);
 }
@@ -1790,7 +1798,7 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
   align-items: center;
   gap: 6px;
   min-width: 0;
-  height: 30px;
+  height: var(--vn-ctl, 30px);
   padding: 0 10px;
   border: 0;
   border-radius: 999px;
@@ -1817,10 +1825,14 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
 .vn-chip .vn-chip-caret { width: 11px; height: 11px; opacity: 0.6; }
 
 .vn-chip-label {
+  flex: none;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Long model ids ellipsize instead of squeezing everything else. */
+.vn-chip-model-label { flex: 0 1 auto; max-width: 16ch; }
 
 /* Combined runtime chip: model · effort, one target, one popover. */
 .vn-chip-runtime {
@@ -1842,7 +1854,14 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
   font-weight: 550;
 }
 
-.vn-chip-runtime > svg:first-child { color: var(--vn-accent); }
+/* Provider mark: a silhouette tinted with the node accent. */
+.vn-chip-mark {
+  display: inline-flex;
+  flex: none;
+  color: var(--vn-accent);
+}
+
+.vn-chip .vn-chip-mark svg { width: 14px; height: 14px; }
 
 .vn-chip-sep {
   width: 3px;
@@ -2656,7 +2675,7 @@ select optgroup {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
+  height: var(--vn-ctl, 30px);
   margin-left: auto;
   padding: 0 9px;
   border: 0;
@@ -2672,6 +2691,42 @@ select optgroup {
 }
 
 .vn-context[hidden] { display: none; }
+
+/* "Compact" appears beside the ring once context is nearly full. */
+.vn-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: var(--vn-ctl, 30px);
+  margin-left: auto;
+  padding: 0 11px 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 28%, transparent);
+  color: var(--stop-btn-text);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 550;
+  white-space: nowrap;
+  cursor: pointer;
+  animation: vn-compact-in var(--vn-slow) var(--vn-spring) both;
+  transition: background-color var(--vn-fast) ease, transform var(--vn-med) var(--vn-spring);
+}
+
+.vn-compact[hidden] { display: none; }
+.vn-compact svg { width: 13px; height: 13px; flex: none; }
+.vn-compact:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 16%, transparent); }
+.vn-compact:disabled { cursor: default; opacity: 0.6; }
+.vn-compact:not([hidden]) + .vn-context { margin-left: 2px; }
+
+@keyframes vn-compact-in {
+  from { opacity: 0; transform: scale(0.92); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vn-compact { animation: none; }
+}
 .vn-context:hover,
 .vn-context:focus-visible,
 .vn-context[data-pinned] { background: var(--bg-accent); color: var(--text); }
@@ -2726,6 +2781,55 @@ select optgroup {
 .vn-context:hover .vn-context-tip,
 .vn-context:focus-visible .vn-context-tip,
 .vn-context[data-pinned] .vn-context-tip { opacity: 1; transform: none; }
+
+/* --- responsive toolbar ---------------------------------------------- */
+
+/* Labels give way in a fixed order as the composer narrows: effort text,
+ * then the context and Compact labels, then the model name (first when
+ * Stop needs the room). Icons, meters and the ring always stay; the full
+ * text remains in each control's tooltip and accessible name. */
+@container vn-composer (width < 560px) {
+  .vn-chip-effort-label { display: none; }
+}
+
+@container vn-composer (width < 470px) {
+  .vn-context-label,
+  .vn-compact-label { display: none; }
+  .vn-context { padding-inline: 7px; }
+  .vn-compact { padding-inline: 9px; }
+}
+
+@container vn-composer (width < 420px) {
+  .composer-box:has(#stopBtn, .vn-compact:not([hidden])) .vn-chip-model-label,
+  .composer-box:has(#stopBtn, .vn-compact:not([hidden])) .vn-chip-sep { display: none; }
+}
+
+@container vn-composer (width < 340px) {
+  .vn-chip-model-label,
+  .vn-chip-sep { display: none; }
+}
+
+/* --- runtime popover marks -------------------------------------------- */
+
+.runtime-popover-field > .vn-field-mark {
+  grid-row: 2;
+  grid-column: 1;
+  z-index: 1;
+  display: inline-flex;
+  align-self: center;
+  justify-self: start;
+  margin-left: 11px;
+  color: var(--vn-accent);
+  pointer-events: none;
+}
+
+.runtime-popover-field > .vn-field-mark svg { width: 14px; height: 14px; }
+
+.runtime-popover-field > .vn-field-mark + .runtime-popover-select {
+  grid-row: 2;
+  grid-column: 1;
+  padding-left: 33px;
+}
 
 /* --- ultrathink ------------------------------------------------------- */
 
@@ -3725,16 +3829,16 @@ input[type="radio"] { accent-color: var(--vn-accent); }
   .composer { padding-inline: calc(0.5rem + var(--safe-left)) calc(0.5rem + var(--safe-right)); }
   .main[data-vn-float] > .composer { padding-bottom: max(0.5rem, var(--safe-bottom)); }
 
-  .composer-box { border-radius: 26px; padding: 4px 6px 6px; }
+  .composer-box { --vn-ctl: 40px; border-radius: 26px; padding: 4px 6px 6px; }
   .prompt { font-size: 16px; padding: 10px 10px 4px; }
 
   .composer-icon-btn,
-  .send-btn { width: 40px; height: 40px; min-height: 40px; }
+  .send-btn { min-width: var(--vn-ctl); min-height: var(--vn-ctl); }
 
-  .stop-btn { height: 38px; min-height: 38px; }
+  .stop-btn { padding: 0 14px; }
 
   .vn-composer-bar { padding-inline: 4px; gap: 2px; }
-  .vn-chip { height: 36px; padding: 0 10px; font-size: 0.8125rem; }
+  .vn-chip { padding: 0 10px; font-size: 0.8125rem; }
 
   /* Sidebar drawer: floating glass panel. */
   .sidebar {

@@ -170,7 +170,7 @@ for (const scheme of ["dark", "light"]) {
   const { p, ctx } = await setup({ width: 1440, height: 900, scheme: "dark" });
   await p.click(".composer .prompt");
   await p.keyboard.type("Now ultrathink about how to roll this out safely", { delay: 4 });
-  const url = await p.evaluate(() => document.querySelector("link[data-extension]").href.replace(/style\.css$/, "composer.js"));
+  const url = await p.evaluate(() => document.querySelector('link[data-extension="varnish"]').href.replace(/style\.css$/, "composer.js"));
   await p.evaluate(async (u) => {
     const m = await import(u);
     m.createComposerExtras(document.getElementById("root"), {

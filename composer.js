@@ -7,8 +7,23 @@ const ULTRA = /\bultrathink\b/gi;
 
 /* ---------------------------------------------------------- context ring */
 
+const COMPACT_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/></svg>';
+
+// Set the composer text the way typing would, so the app's own input
+// handler updates its state.
+function setPrompt(ta, value) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set;
+  setter.call(ta, value);
+  ta.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
 function createContextRing(root, api) {
   let ring = null;
+  let compact = null;
+  let compacting = false;
   let usage = api.getContextUsage?.() ?? null;
   const R = 7;
   const C = 2 * Math.PI * R;
@@ -25,6 +40,45 @@ function createContextRing(root, api) {
     // Keyboard/touch users get the details on focus/tap (CSS shows the tip).
     ring.addEventListener("click", () => ring.toggleAttribute("data-pinned"));
     ring.addEventListener("blur", () => ring.removeAttribute("data-pinned"));
+
+    // Near the limit: one click runs the app's own /compact command.
+    compact = el("button", {
+      type: "button",
+      class: "vn-compact",
+      title: "Compact the conversation to free up context",
+      "aria-label": "Compact conversation now",
+      hidden: true,
+    });
+    compact.innerHTML = `${COMPACT_ICON}<span class="vn-compact-label">Compact</span>`;
+    compact.addEventListener("click", compactNow);
+  }
+
+  // Runs /compact through the composer's own command path, then restores
+  // whatever the user had typed. Attachments are never touched.
+  async function compactNow() {
+    const ta = root.querySelector(".composer .prompt");
+    if (!ta || compacting) return;
+    compacting = true;
+    compact.disabled = true;
+    const draft = ta.value;
+    try {
+      setPrompt(ta, "/compact");
+      await nextFrame();
+      const send = root.querySelector("#sendBtn");
+      if (send && !send.disabled && !send.classList.contains("live")) send.click();
+      await nextFrame();
+      if (ta.value !== draft) setPrompt(ta, draft);
+    } finally {
+      compacting = false;
+      compact.disabled = false;
+      render();
+    }
+  }
+
+  // Compaction cannot start while a reply runs or another compaction is
+  // in progress (the app ignores it), so only offer it when it will work.
+  function canCompact() {
+    return !root.querySelector("#stopBtn") && !root.querySelector(".composer .compaction-status");
   }
 
   function render() {
@@ -32,11 +86,13 @@ function createContextRing(root, api) {
     if (!bar) return;
     if (!ring) build();
     if (ring.parentElement !== bar) bar.append(ring);
+    if (compact.nextElementSibling !== ring) ring.before(compact);
 
     const used = usage?.usedTokens ?? 0;
     const limit = usage?.inputLimit ?? 0;
     if (!usage || (!used && !limit)) {
       ring.hidden = true;
+      compact.hidden = true;
       return;
     }
     ring.hidden = false;
@@ -55,7 +111,9 @@ function createContextRing(root, api) {
     ];
     if (usage.cachedInputTokens) lines.push(`${formatTokens(usage.cachedInputTokens)} cached`);
     if (usage.estimated) lines.push("Estimated");
-    if (level === "critical") lines.push("Near the limit: consider /compact");
+    const offerCompact = level === "critical" && (compacting || canCompact());
+    compact.hidden = !offerCompact;
+    if (level === "critical") lines.push(offerCompact ? "Near the limit" : "Near the limit: consider /compact");
     ring.querySelector(".vn-context-tip").textContent = lines.join(" · ");
     ring.setAttribute("aria-label", `Context usage: ${lines.join(", ")}`);
   }
@@ -70,6 +128,7 @@ function createContextRing(root, api) {
     dispose() {
       if (typeof off === "function") off();
       ring?.remove();
+      compact?.remove();
     },
   };
 }
