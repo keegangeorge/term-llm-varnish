@@ -5,6 +5,7 @@
 // small self-owned elements; nothing app-owned is moved or rewritten.
 
 import { KEYS, read, write, el, isRunning, formatDuration, reducedMotion } from "./util.js";
+import { createArrivalTracker, transcriptRecords } from "./arrivals.js";
 
 const SVG = {
   wrap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h13a3 3 0 0 1 0 6h-4"/><path d="m15 16-2 2 2 2"/><path d="M4 18h5"/></svg>',
@@ -212,7 +213,12 @@ export function createThread(root) {
   let jump = null;
   let scroller = null;
   let main = null;
-  let lastHeight = 0;
+  const arrivals = createArrivalTracker();
+  let session = null;
+  // Attribute-only media/link updates and in-place text streaming do not reach
+  // the main child-list observer. Observe the scroller without redecoration;
+  // signatures exclude layout/disclosure controls, and the jump is its sibling.
+  const contentObserver = new MutationObserver(() => ensureJump());
 
   function distanceFromBottom() {
     return scroller ? scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight : 0;
@@ -222,6 +228,9 @@ export function createThread(root) {
     if (!jump || !scroller) return;
     const away = distanceFromBottom() > 480;
     if (!away) jump.removeAttribute("data-new");
+    const label = jump.querySelector(".vn-jump-label");
+    const text = jump.hasAttribute("data-new") ? "New messages" : "Latest";
+    if (label.textContent !== text) label.textContent = text;
     jump.toggleAttribute("data-show", away);
     jump.tabIndex = away ? 0 : -1;
   }
@@ -235,9 +244,17 @@ export function createThread(root) {
     const nextScroller = nextMain?.querySelector(":scope > .chat-scroll");
     if (nextScroller !== scroller) {
       scroller?.removeEventListener("scroll", onScroll);
+      contentObserver.disconnect();
       scroller = nextScroller;
       scroller?.addEventListener("scroll", onScroll, { passive: true });
-      lastHeight = scroller?.scrollHeight ?? 0;
+      if (scroller) contentObserver.observe(scroller, {
+        attributes: true,
+        attributeFilter: ["href", "title", "src", "srcset", "alt", "poster", "type", "kind", "srclang", "label"],
+        characterData: true,
+        subtree: true,
+      });
+      arrivals.reset();
+      jump?.removeAttribute("data-new");
     }
     if (!nextMain) return;
     if (!jump) {
@@ -246,6 +263,8 @@ export function createThread(root) {
         el("span", { class: "vn-jump-label", text: "Latest" }),
       ]);
       jump.addEventListener("click", () => {
+        jump.removeAttribute("data-new");
+        updateJump();
         scroller?.scrollTo({ top: scroller.scrollHeight, behavior: reducedMotion.matches ? "auto" : "smooth" });
       });
     }
@@ -253,16 +272,16 @@ export function createThread(root) {
       main = nextMain;
       main.append(jump);
     }
-    // New content while scrolled away: say so.
-    if (scroller) {
-      const h = scroller.scrollHeight;
-      if (h > lastHeight + 4 && distanceFromBottom() > 480) {
-        jump.setAttribute("data-new", "");
-        jump.querySelector(".vn-jump-label").textContent = "New messages";
-      } else if (!jump.hasAttribute("data-new")) {
-        jump.querySelector(".vn-jump-label").textContent = "Latest";
-      }
-      lastHeight = h;
+    // The host reuses its scroller between chats. A different route is a new
+    // baseline, never unread activity carried over from the previous session.
+    const nextSession = location.pathname;
+    if (session !== nextSession) {
+      session = nextSession;
+      arrivals.reset();
+      jump.removeAttribute("data-new");
+    }
+    if (arrivals.observe(session, transcriptRecords(root)) && distanceFromBottom() > 480) {
+      jump.setAttribute("data-new", "");
     }
     updateJump();
   }
@@ -349,6 +368,7 @@ export function createThread(root) {
     sync,
     runSlash,
     dispose() {
+      contentObserver.disconnect();
       scroller?.removeEventListener("scroll", onScroll);
       jump?.remove();
       root.querySelectorAll(".vn-code-head, .vn-user-actions, .vn-empty").forEach((n) => n.remove());

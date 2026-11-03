@@ -66,7 +66,7 @@ def main():
         extension = config / 'extensions/varnish'
         extension.mkdir(parents=True)
         # Explicit runtime allowlist: never copy ignored local.json, git, or tools/out.
-        for file in ['extension.yaml', 'style.css', 'main.js', 'util.js', 'thread.js',
+        for file in ['extension.yaml', 'style.css', 'main.js', 'util.js', 'thread.js', 'arrivals.js',
                      'composer.js', 'palette.js', 'notify.js', 'favicon.js', 'LICENSE']:
             shutil.copyfile(ROOT / file, extension / file)
         shutil.copytree(ROOT / 'fonts', extension / 'fonts')
