@@ -61,7 +61,7 @@ const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 function sidebarHTML() {
   const agents = AGENTS.map(([id, name, , here, attention]) => `
     <div class="hub-agent-row" data-reorder-id="${id}"><a class="hub-agent-link" href="#" ${here ? 'aria-current="true"' : ""}>
-      <span class="hub-agent-icon" aria-hidden="true"></span><span class="hub-agent-name">${name}</span>
+      <svg class="hub-agent-icon" data-icon="bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><use href="#bot"></use></svg><span class="hub-agent-name">${name}</span>
       ${attention ? '<span class="hub-agent-attention" aria-hidden="true"></span>' : ""}</a>
       <div class="hub-agent-menu"><button class="hub-agent-menu-trigger" type="button">⋯</button></div></div>`).join("");
   const groups = SESSIONS.map(([label, rows]) => `
