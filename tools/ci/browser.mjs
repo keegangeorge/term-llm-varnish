@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { chromium } from 'playwright';
 import { BASE, allowedRequest } from './policy.mjs';
+import { checkAppearance } from '../check-appearance.mjs';
 
 const out = new URL('../out/ci/', import.meta.url);
 fs.mkdirSync(out, { recursive: true });
@@ -18,6 +19,8 @@ try {
     ['desktop-dark', { viewport: { width: 1440, height: 900 }, colorScheme: 'dark' }],
     ['desktop-light', { viewport: { width: 1440, height: 900 }, colorScheme: 'light' }],
     ['mobile-dark', { viewport: { width: 390, height: 844 }, colorScheme: 'dark', isMobile: true, hasTouch: true }],
+    ['short-mobile-light', { viewport: { width: 568, height: 320 }, colorScheme: 'light', isMobile: true, hasTouch: true }],
+    ['short-desktop-dark', { viewport: { width: 844, height: 320 }, colorScheme: 'dark' }],
   ]) {
     const context = await browser.newContext({ ...options, serviceWorkers: 'block', permissions: [] });
     const errors = [];
@@ -48,6 +51,12 @@ try {
       for (const selector of ['#appShell', '.composer .prompt', '.vn-theme-btn', '.vn-composer-bar']) {
         await page.locator(selector).first().waitFor({ state: 'attached' });
       }
+      const appearance = await checkAppearance(page);
+      let appearanceResized;
+      if (name === 'desktop-dark') {
+        appearanceResized = await checkAppearance(page, { width: 844, height: 320 });
+        await page.setViewportSize(options.viewport);
+      }
       await page.screenshot({ path: new URL(`${name}.png`, out).pathname });
       // Actual safe UI commands, not injected modal markup or synthetic key handlers.
       await page.keyboard.press('Control+k');
@@ -70,7 +79,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, reads: [...reads].sort() });
+      report.results.push({ name, pass: true, appearance, appearanceResized, reads: [...reads].sort() });
     } catch (error) {
       failed = true;
       report.results.push({ name, pass: false, error: String(error), pageErrors: errors });
