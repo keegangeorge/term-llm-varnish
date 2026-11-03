@@ -662,6 +662,18 @@ function createAgentSection(root) {
     return letters.toUpperCase();
   }
 
+  // Monogram tiles show initials. The tile may be an <svg>, which can't host
+  // text through ::before, so the letters become the same kind of image the
+  // other glyphs are (style.css draws --vn-glyph over the tile gradient).
+  function monogramGlyph(letters) {
+    const text = letters.replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[c]);
+    const label = (paint, dy) =>
+      `<text x='11' y='${11 + dy}' text-anchor='middle' dominant-baseline='central' ${paint} ` +
+      `font-family='-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif' font-size='9.5' font-weight='700' letter-spacing='0.2'>${text}</text>`;
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'>${label("fill='black' fill-opacity='0.2'", 1)}${label("fill='white'", 0)}</svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  }
+
   function decorate(link) {
     const nameEl = link.querySelector(".hub-agent-name");
     const icon = link.querySelector(".hub-agent-icon");
@@ -673,6 +685,8 @@ function createAgentSection(root) {
     icon.dataset.vnName = name;
     icon.dataset.vnKind = kind;
     icon.dataset.vnInitials = initials(name);
+    if (kind === "monogram") icon.style.setProperty("--vn-glyph", monogramGlyph(icon.dataset.vnInitials));
+    else icon.style.removeProperty("--vn-glyph");
     if (!link.title) link.title = name;
   }
 
