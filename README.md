@@ -14,13 +14,14 @@ Varnish combines frosted surfaces, soft accent lighting, Geist typography, and a
 - **Geist and Geist Mono**, bundled locally. No external font service.
 - **Compact or Comfortable** text sizing.
 - Frosted panels, rounded controls, subtle highlights, and a restrained ambient glow.
+- Accent hairlines on the sidebar and diff-panel resize edges, and accent-aware versions of term-llm's theme tokens (send-button states, inline code, content width, message size).
 - A responsive layout and reduced-motion support.
 - Optional neutral or accent-colored browser chrome through the page's theme-color metadata. Browser support varies.
 
 ### A quieter composer
 
 - A rounded, chat-first composer whose controls share one height, with a compact model/effort chip (showing the model maker's mark in the accent colour, also beside the provider and model in its popover) that opens term-llm's own runtime controls.
-- A context-usage ring when the server exposes context data, with token details on hover. Near the limit, a **Compact** button runs `/compact` in one click and keeps your draft.
+- A context-usage ring when the server exposes context data, with token details on hover. Clicking it opens term-llm's context card (window, auto-compaction point, **Compact now**, session stats) above the composer, so the header meter is folded into the ring. Near the limit, a **Compact** button runs `/compact` in one click and keeps your draft.
 - Toolbar labels give way in a fixed order as the composer narrows (effort text, then context, then model name), so icons and meters never get squeezed.
 - A rainbow highlight for `ultrathink` when the selected provider is `claude-bin`. This is a visual cue, not a new model capability or an effort override.
 - A glass live-voice card above the composer: an accent orb that breathes while listening, ripples while speaking, and spins a halo while connecting or working, with the live transcript in a quiet inset and a red Stop pill. The dictation strip gets the same finish. Styling only; live voice itself is term-llm's.
@@ -41,7 +42,9 @@ Varnish combines frosted surfaces, soft accent lighting, Geist typography, and a
 ### A more readable conversation
 
 - Tool-type icons and a quieter tool-call timeline.
+- Reasoning rows styled like tool headers, with an accent rule down expanded thoughts and a soft sheen on the label while the model is thinking.
 - An estimated “Worked” duration derived from surrounding message timestamps, not authoritative tool execution timing.
+- Header breadcrumbs as quiet pills: the project (with a folder mark) and worktree sit before the title, and fold to a small label line when the header narrows.
 - Code-block language headers and a persistent long-line wrap toggle.
 - User-message copy/edit controls that use the app's existing composer and command behavior.
 - A jump-to-latest button when you scroll away from the bottom.
@@ -53,7 +56,7 @@ Varnish combines frosted surfaces, soft accent lighting, Geist typography, and a
 
 ## Install
 
-Requires a running term-llm web UI with extension support. Tested with **term-llm 0.9.82** in Chromium. Other versions and browsers may work, but are not guaranteed.
+Requires a running term-llm web UI with extension support. Tested with **term-llm 0.9.93** in Chromium. Other versions and browsers may work, but are not guaranteed.
 
 ```bash
 git clone https://github.com/keegangeorge/term-llm-varnish.git
@@ -197,7 +200,7 @@ The live preview injects the live-voice panel markup in every phase (connecting,
 | `main.js` | Appearance, sidebar, composer controls, lifecycle |
 | `util.js` | Preferences, node accents, same-origin API helpers |
 | `thread.js` | Conversation, code, timeline, new-chat additions |
-| `composer.js` | Context usage, Compact button and ultrathink highlighting |
+| `composer.js` | Context ring (opens term-llm's context card), Compact button and ultrathink highlighting |
 | `logos.js` | Provider marks for the model chip (Simple Icons, CC0) |
 | `palette.js` | Keyboard command palette |
 | `notify.js` | Background-tab title/favicon signals |

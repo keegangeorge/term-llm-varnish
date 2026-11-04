@@ -89,6 +89,10 @@ function threadHTML() {
   return `
   <article class="message user" data-created="${t0}"><div class="message-body"><div class="message-text">The billing worker retries failed charges forever. Can you cap retries with exponential backoff and add a spec? ultrathink about edge cases.</div></div>
     <div class="message-meta"><time>14m</time></div></article>
+  <article class="message thought"><button class="thought-toggle" type="button" aria-expanded="true">
+    <span class="thought-arrow">${ICON_CHEVRON}</span>
+    <span class="thought-label"><strong class="thought-prefix">Thought:</strong> Capping retries without losing charges</span></button>
+    <div class="thought-body"><div class="markdown-body"><p>A restart must not reset the attempt count, so it belongs on the charge row. Charges past the cap need a terminal state instead of silently dropping.</p></div></div></article>
   <article class="message assistant" data-created="${t0 + 40_000}"><div class="message-body"><div class="markdown-body">
     <p>I'll look at how retries are scheduled today, then add a capped backoff.</p></div></div></article>
   <div class="tool-group"><article class="tool-group-card"><button class="tool-group-toggle" type="button" aria-expanded="true">
@@ -125,6 +129,15 @@ async function setup({ width, height, scheme, mobile = false, thread = true }) {
     localStorage.setItem("term_llm_selected_model", "opus");
     for (const [id, , accent] of agents) localStorage.setItem(`term-llm:varnish:accent:${id}`, accent);
   }, AGENTS);
+  // Only Varnish runs: other extensions on this server may render real
+  // account or workspace data into the page. Their files load empty (an
+  // aborted request would show the app's extension-error toast).
+  await ctx.route(/\/extensions\/[^/]+\/[^/]+\//, (route) => {
+    const url = route.request().url();
+    if (/\/extensions\/[^/]+\/varnish\//.test(url)) return route.continue();
+    const js = /\.m?js(\?|$)/.test(url);
+    return route.fulfill({ status: 200, contentType: js ? "text/javascript" : "text/css", body: js ? "export default {};" : "" });
+  });
   const p = await ctx.newPage();
   await p.goto(base, { waitUntil: "load" });
   await p.waitForTimeout(2500);
@@ -141,11 +154,24 @@ async function setup({ width, height, scheme, mobile = false, thread = true }) {
     if (brand) brand.textContent = "macbook";
     const emptyTitle = document.querySelector(".empty-chat h2");
     if (emptyTitle) emptyTitle.textContent = "macbook";
+    // Hide the draft's real project/worktree crumbs; demo shots add their own.
+    document.querySelectorAll(".header-title-context .header-crumb, .header-title-context .header-title-badge")
+      .forEach((n) => { n.style.display = "none"; });
     if (thread) {
       const msgs = document.querySelector("#messages");
       msgs.innerHTML = threadHtml;
       const title = document.querySelector("#activeSessionTitle");
-      if (title) title.textContent = "Refactor the billing worker";
+      if (title) {
+        title.textContent = "Refactor the billing worker";
+        // The app's project breadcrumb markup, with a demo project name.
+        const crumb = document.createElement("button");
+        crumb.type = "button";
+        crumb.className = "header-crumb header-crumb-project";
+        crumb.setAttribute("aria-label", "Project billing-service");
+        crumb.innerHTML = '<span>billing-service</span><svg class="icon header-crumb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+        title.before(crumb);
+        title.parentElement.classList.add("has-context");
+      }
     }
   }, { sidebar: sidebarHTML(), threadHtml: threadHTML(), thread });
   await p.waitForTimeout(800);
@@ -174,7 +200,7 @@ for (const scheme of ["dark", "light"]) {
   await p.evaluate(async (u) => {
     const m = await import(u);
     m.createComposerExtras(document.getElementById("root"), {
-      getContextUsage: () => ({ usedTokens: 68400, inputLimit: 200000, cachedInputTokens: 51000, estimated: false }),
+      getContextUsage: () => ({ usedTokens: 68400, inputLimit: 200000, cachedInputTokens: 51000, estimated: false, autoCompactAt: 180000 }),
       onContextUsageChanged: () => () => {},
     }).sync();
   }, url);
