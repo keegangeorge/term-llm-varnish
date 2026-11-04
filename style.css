@@ -111,6 +111,18 @@
   --gradient-accent: var(--surface-2);
   --gradient-accent-strong: var(--vn-accent);
 
+  /* The app's theme seeds and component tokens. These follow --vn-accent and
+   * the scheme's own colours, so light mode needs no copy of them. Without
+   * them the app's send-button hover and a few accents fall back to its
+   * monochrome --accent. */
+  --accent-blue: var(--vn-accent);
+  --accent-hover: color-mix(in srgb, var(--vn-accent) 90%, white);
+  --accent-active: color-mix(in srgb, var(--vn-accent) 88%, var(--bg));
+  --code-inline-bg: var(--bg-accent);
+  --code-inline-text: var(--text);
+  --content-width: 768px;
+  --message-font-size: 0.9375rem;
+
   --header-action-height: 32px;
   --header-action-radius: 10px;
   --header-action-bg-hover: var(--bg-accent);
@@ -1083,6 +1095,111 @@ a {
   color: var(--text);
 }
 
+/* --- breadcrumbs: project and worktree as quiet pills before the title. */
+
+.header-title-context { align-items: center; gap: 8px; }
+
+.header-crumb {
+  align-items: center;
+  height: 24px;
+  gap: 5px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 550;
+  line-height: 1;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease,
+    box-shadow var(--vn-fast) ease;
+}
+
+.header-crumb:first-child { margin-inline-start: 0; }
+.header-crumb ~ .header-title { margin-inline-start: 2px; }
+/* Split the title's descender padding so it centres on the pills. */
+.header-title-context.has-context .header-title { padding-block: 0.1em; }
+
+/* A folder mark says "project", as the branch glyph says "worktree". */
+.header-crumb-project::before {
+  content: "";
+  flex: none;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  opacity: 0.75;
+  -webkit-mask: var(--vn-folder-icon) center / contain no-repeat;
+  mask: var(--vn-folder-icon) center / contain no-repeat;
+  --vn-folder-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'/%3E%3C/svg%3E");
+}
+
+.header-crumb-worktree svg,
+.header-crumb-worktree .chip-label { flex: none; }
+.header-crumb-worktree svg { width: 12px; height: 12px; opacity: 0.75; }
+.header-crumb-worktree .chip-label { flex: 0 1 auto; }
+.header-crumb-worktree { font-size: 0.75rem; }
+
+.header-crumb-chevron {
+  width: 11px;
+  height: 11px;
+  margin-inline-end: -2px;
+  opacity: 0.6;
+  transition: transform var(--vn-med) var(--vn-spring), opacity var(--vn-fast) ease;
+}
+
+@media (hover: hover) {
+  .header-crumb:hover { background: var(--bg-accent); color: var(--text); }
+  .header-crumb:hover .header-crumb-chevron { opacity: 1; }
+  .header-title-badge:hover { background: var(--bg-accent); }
+}
+
+.header-crumb[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--vn-accent) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vn-accent) 32%, transparent);
+  color: var(--text);
+}
+.header-crumb[aria-expanded="true"] .header-crumb-chevron { opacity: 1; }
+
+.header-crumb:focus-visible,
+.header-title-badge:focus-visible {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--vn-accent);
+}
+
+/* "3 paths" matches the crumbs' type, one step smaller. */
+.header-title-badge {
+  height: 20px;
+  padding: 0 7px;
+  border-color: var(--border);
+  font-size: 0.6875rem;
+  font-weight: 550;
+  line-height: 1;
+}
+
+/* Folded desktop header: the crumbs become a small label line above the
+ * title, so they drop the pill (it would grow the header). */
+@media (width >= 768px) {
+  @container main-header (width < 920px) {
+    .header-title-context.has-context { align-items: center; }
+    .has-context > .header-crumb {
+      height: auto;
+      background: none;
+      box-shadow: none;
+      font-size: 0.6875rem;
+      font-weight: 550;
+    }
+    .has-context > .header-crumb-project::before { width: 10px; height: 10px; }
+    .has-context > .header-crumb[aria-expanded="true"] { background: none; box-shadow: none; color: var(--vn-accent); }
+    .has-context > .header-title-badge { height: auto; }
+  }
+}
+
+.chip-popover-project { border-radius: 16px; }
+/* Line the heading up with the item icons below it. */
+.chip-popover-project .runtime-popover-header {
+  margin-bottom: 0.35rem;
+  padding: 0.25rem 0 0 0.6rem;
+}
+
 .chip-trigger.header-action,
 .header-action {
   font-size: 0.75rem;
@@ -1350,13 +1467,12 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
   padding-bottom: 1.25rem;
 }
 
-.messages { max-width: 768px; gap: 0.85rem; }
+.messages { gap: 0.85rem; }
 .messages > .message.user:not(:first-child) { margin-top: 1rem; }
 
 .message { width: 100%; gap: 0.3rem; }
 
 .message-body {
-  font-size: 0.9375rem;
   line-height: 1.7;
   letter-spacing: -0.004em;
 }
@@ -1484,9 +1600,7 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
   font-size: 0.84em;
   padding: 0.12em 0.38em;
   border-radius: 6px;
-  background: var(--bg-accent);
   border: 1px solid var(--border);
-  color: var(--text);
 }
 
 .markdown-body pre {
@@ -1671,8 +1785,6 @@ html[data-vn-scheme="light"] .vn-swatch { --sw: var(--sw-light); }
 @media (hover: hover) and (pointer: fine) {
   .composer { padding-bottom: 0.9rem; }
 }
-
-.composer-inner { max-width: 768px; }
 
 .composer-box {
   /* One height for every toolbar control (buttons, chips, Stop). */
@@ -2029,6 +2141,53 @@ select optgroup {
 
 .runtime-popover-fast-toggle span { transition: transform 320ms var(--vn-spring), background 120ms; }
 .runtime-popover-fast-toggle[aria-checked="true"] span { background: var(--vn-on-accent); }
+
+/* MCP row in the runtime popover: a quiet pill like the composer chips. */
+.runtime-mcp-row { border-top-color: var(--border); }
+.runtime-mcp-manage {
+  gap: 4px;
+  height: 30px;
+  padding: 0 8px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-accent);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 550;
+  white-space: nowrap;
+  transition: background-color var(--vn-fast) ease, box-shadow var(--vn-fast) ease;
+}
+.runtime-mcp-manage svg { width: 13px; height: 13px; color: var(--text-muted); }
+.runtime-mcp-manage:hover {
+  background: color-mix(in srgb, var(--vn-accent) 12%, var(--bg-accent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vn-accent) 30%, transparent);
+}
+.runtime-mcp-manage:focus-visible { outline: none; box-shadow: var(--vn-ring); }
+
+/* --- resize handles ---------------------------------------------------- */
+
+/* The sidebar and diff panel edges: an accent hairline that waits a beat
+ * on hover (so passing the pointer over it doesn't flash) and holds while
+ * dragging. */
+.panel-resize-handle::after {
+  width: 2px;
+  margin-left: -0.5px;
+  border-radius: 2px;
+  background: var(--vn-accent);
+  opacity: 0;
+  transition: opacity var(--vn-med) ease;
+}
+.panel-resize-handle[data-edge="right"]::after { margin: 0 -0.5px 0 0; }
+.panel-resize-handle:hover::after,
+.panel-resize-handle:focus-visible::after,
+.panel-resize-handle[data-resizing]::after {
+  background: var(--vn-accent);
+  opacity: 0.85;
+}
+.panel-resize-handle:hover::after { transition-delay: 150ms; }
+.panel-resize-handle[data-resizing]::after { opacity: 1; transition-delay: 0s; }
+.panel-resize-handle:focus-visible { outline: none; }
 
 [role="menu"] button,
 .session-menu button,
@@ -2390,6 +2549,55 @@ select optgroup {
 /* Back-to-back groups read as one block. */
 .tool-group + .tool-group { margin-top: -0.55rem; }
 
+/* --- thought rows ------------------------------------------------------ */
+
+/* Reasoning reads like a tool card's header (same type, same colour-only
+ * hover), with an accent rule down the expanded body. */
+.thought-toggle {
+  padding: 0.3rem 0.7rem 0.3rem var(--thought-inset);
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  transition: color var(--vn-fast) ease;
+}
+
+@media (hover: hover) {
+  .thought-toggle:hover { background: transparent; color: var(--text); }
+}
+
+.thought-toggle:focus-visible { outline: none; box-shadow: var(--vn-ring); }
+
+.thought-arrow svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  transition: transform var(--vn-slow) var(--vn-spring);
+}
+
+.thought-prefix { font-weight: 550; font-style: normal; }
+
+.thought-body {
+  border-left-color: color-mix(in srgb, var(--vn-accent) 35%, var(--border));
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+/* While the model is thinking, a soft sheen runs across the label. */
+.message.thought.live .thought-label {
+  background: linear-gradient(90deg, var(--text-muted) 0%, var(--text) 45%,
+      var(--text-muted) 90%) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: vn-thought-sheen 2.4s linear infinite;
+}
+
+@keyframes vn-thought-sheen { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .message.thought.live .thought-label { animation: none; color: var(--text); background: none; }
+}
+
+:root[data-vn-type="comfortable"] .thought-toggle { font-size: 0.875rem; }
+
 .tool-group-details.open { padding: 0.35rem 0 0.4rem; }
 
 .tool-group-entry {
@@ -2397,6 +2605,11 @@ select optgroup {
   gap: 0.6rem;
   padding: 0 0.75rem;
 }
+
+/* The app aligns entries on the text baseline for its inline glyph; the
+ * 22px icon tile is placed from the top instead (margin-top below). */
+.tool-group-entry[data-vn-tool] { align-items: flex-start; }
+.tool-group-entry[data-vn-tool] .tool-entry-icon > :not(style) { display: none; }
 
 /* Rail connecting the steps. */
 .tool-group-entry:not(:last-child)::after {
@@ -2781,6 +2994,68 @@ select optgroup {
 .vn-context:hover .vn-context-tip,
 .vn-context:focus-visible .vn-context-tip,
 .vn-context[data-pinned] .vn-context-tip { opacity: 1; transform: none; }
+
+/* A click opens the app's context card (composer.js), so the ring is a real
+ * button: pointer, accent-tinted while its card is open, tip out of the way. */
+.vn-context { cursor: pointer; }
+.vn-context[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--vn-accent) 14%, transparent);
+  color: var(--text);
+}
+.vn-context[aria-expanded="true"] .vn-context-tip { opacity: 0; }
+
+/* --- context card ----------------------------------------------------- */
+
+/* The app's header meter duplicates the ring, so it stays in the DOM (it
+ * owns the card) but out of sight, like the header model picker. */
+:root[data-vn-composer-bar] .main-header .context-meter {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Without the composer bar the header meter shows; give it the ring's pill. */
+.context-meter.header-action {
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 550;
+  gap: 6px;
+  color: var(--vn-text-subtle);
+}
+.context-meter .context-meter-detail { font-weight: 500; }
+
+/* Calm readings use the accent, like the ring; amber and red come from the
+ * app's tones. */
+.context-meter:not([data-tone="warm"], [data-tone="hot"]),
+.context-popover:not([data-tone="warm"], [data-tone="hot"]) {
+  --context-tone: var(--vn-accent);
+}
+.context-meter[data-tone="calm"] { --context-tone-text: var(--vn-text-subtle); }
+
+:root[data-vn-composer-bar] .chip-popover.context-popover {
+  inset: auto var(--vn-ctx-right, 24px) var(--vn-ctx-bottom, 96px) auto !important;
+  transform-origin: bottom right;
+}
+
+.chip-popover.context-popover { border-radius: 20px; padding: 0.9rem; }
+.context-ring-label { font-size: 17px; font-weight: 650; }
+.context-ring-track { stroke: var(--border-strong); }
+.context-popover-figures { font-size: 0.8125rem; }
+.context-popover-figures dd { font-weight: 600; }
+.context-bar { height: 6px; background: var(--bg-accent); }
+.context-bar-scale { font-size: 0.6875rem; }
+.context-bar-scale-mark { font-weight: 550; }
+.context-popover-note { font-size: 0.75rem; }
+.context-popover-actions .btn {
+  border-radius: 999px;
+  padding: 0.42rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 550;
+}
 
 /* --- responsive toolbar ---------------------------------------------- */
 
@@ -3511,6 +3786,15 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 .slash-command-option.selected { background: var(--vn-accent-soft); }
 .slash-command-name { font-family: var(--font-mono); font-size: 0.8125rem; font-weight: 600; color: var(--text); }
 .slash-command-option.selected .slash-command-name { color: var(--vn-accent); }
+
+/* Argument menus (e.g. thinking levels): pill badges, accent for "current". */
+.slash-command-badge { border-color: var(--border); font-size: 0.6875rem; font-weight: 550; }
+.slash-command-badge.current {
+  border-color: color-mix(in srgb, var(--vn-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--vn-accent) 12%, transparent);
+  color: var(--text);
+}
+.slash-command-footer { border-top-color: var(--border); color: var(--vn-text-subtle); font-size: 0.72rem; }
 .slash-command-description { font-size: 0.78rem; color: var(--text-muted); }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -3637,8 +3921,9 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 :root[data-vn-type="comfortable"] .messages { gap: 1.1rem; }
 :root[data-vn-type="comfortable"] .messages > .message.user:not(:first-child) { margin-top: 1.5rem; }
 
+:root[data-vn-type="comfortable"] { --message-font-size: 1rem; }
+
 :root[data-vn-type="comfortable"] .message-body {
-  font-size: 1rem;
   line-height: 1.75;
   letter-spacing: 0;
 }
@@ -3776,9 +4061,12 @@ input[type="radio"] { accent-color: var(--vn-accent); }
     transform-origin: top right;
   }
 
-  :root[data-vn-runtime-anchor] .chip-popover-runtime[open] {
+  :root[data-vn-runtime-anchor] .chip-popover-runtime[open],
+  :root[data-vn-composer-bar] .chip-popover.context-popover[open] {
     animation-name: vn-pop-up;
   }
+
+  :root[data-vn-composer-bar] .chip-popover.context-popover[open] { transform-origin: bottom right; }
 
   .chip-popover[data-vn-leaving] { animation: vn-pop-out 140ms ease-in both; }
 
@@ -3815,7 +4103,8 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 
   .chat-scroll { padding-top: 1rem; }
 
-  .message-body { font-size: 1rem; line-height: 1.65; }
+  :root { --message-font-size: 1rem; }
+  .message-body { line-height: 1.65; }
   .message.user { max-width: 88%; }
   .message.user .message-body { border-radius: 20px 20px 6px 20px; padding: 0.6rem 0.9rem; }
 
@@ -3885,11 +4174,13 @@ input[type="radio"] { accent-color: var(--vn-accent); }
   }
 
   .chip-popover-runtime,
-  .chip-popover {
+  .chip-popover,
+  .chip-popover.context-popover {
     border-radius: 24px;
   }
 
-  :root[data-vn-runtime-anchor] .chip-popover-runtime {
+  :root[data-vn-runtime-anchor] .chip-popover-runtime,
+  :root[data-vn-composer-bar] .chip-popover.context-popover {
     inset: auto 0.5rem max(0.5rem, env(safe-area-inset-bottom, 0.5rem)) 0.5rem !important;
   }
 
