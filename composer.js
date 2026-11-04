@@ -37,8 +37,9 @@ function createContextRing(root, api) {
       </svg>
       <span class="vn-context-label"></span>
       <span class="vn-context-tip" role="tooltip"></span>`;
-    // Keyboard/touch users get the details on focus/tap (CSS shows the tip).
-    ring.addEventListener("click", () => ring.toggleAttribute("data-pinned"));
+    // Hover/focus shows the tip; a click opens the app's own context card
+    // (Compact now, Session stats). Without that card, a tap pins the tip.
+    ring.addEventListener("click", openCard);
     ring.addEventListener("blur", () => ring.removeAttribute("data-pinned"));
 
     // Near the limit: one click runs the app's own /compact command.
@@ -51,6 +52,27 @@ function createContextRing(root, api) {
     });
     compact.innerHTML = `${COMPACT_ICON}<span class="vn-compact-label">Compact</span>`;
     compact.addEventListener("click", compactNow);
+  }
+
+  // The app's header meter owns the card. Varnish hides that meter while the
+  // composer bar is up (style.css) and anchors the card above this ring.
+  const headerMeter = () => root.querySelector(".main-header .context-meter");
+
+  function openCard() {
+    const meter = headerMeter();
+    if (!meter || !document.documentElement.hasAttribute("data-vn-composer-bar")) {
+      ring.toggleAttribute("data-pinned");
+      return;
+    }
+    ring.removeAttribute("data-pinned");
+    const box = ring.closest(".composer-box") || ring;
+    const ringRect = ring.getBoundingClientRect();
+    const boxRect = box.getBoundingClientRect();
+    const right = Math.max(8, window.innerWidth - ringRect.right - 4);
+    const style = document.documentElement.style;
+    style.setProperty("--vn-ctx-right", `${Math.round(right)}px`);
+    style.setProperty("--vn-ctx-bottom", `${Math.round(window.innerHeight - boxRect.top + 8)}px`);
+    meter.click();
   }
 
   // Runs /compact through the composer's own command path, then restores
@@ -97,8 +119,26 @@ function createContextRing(root, api) {
     }
     ring.hidden = false;
     const pct = limit ? Math.min(100, (used / limit) * 100) : null;
-    const level = pct == null ? "unknown" : pct >= 90 ? "critical" : pct >= 70 ? "warn" : "ok";
+    // Same bands as the app's meter: red at term-llm's auto-compaction
+    // point (90% without one), amber from 70% (pulled down with it).
+    const compactAt = limit && usage.autoCompactAt > 0 && usage.autoCompactAt <= limit
+      ? usage.autoCompactAt : null;
+    const hotAt = compactAt ?? limit * 0.9;
+    const warmAt = Math.min(limit * 0.7, hotAt * (0.7 / 0.9));
+    const level = pct == null ? "unknown" : used >= hotAt ? "critical" : used >= warmAt ? "warn" : "ok";
     ring.dataset.level = level;
+    const meter = headerMeter();
+    const expanded = meter?.getAttribute("aria-expanded") === "true" ? "true" : "false";
+    if (meter) ring.setAttribute("aria-haspopup", "dialog");
+    else ring.removeAttribute("aria-haspopup");
+    if (ring.getAttribute("aria-expanded") !== expanded) {
+      // The app returns focus to its (hidden) meter on close; land on the ring.
+      const active = document.activeElement;
+      const closed = ring.getAttribute("aria-expanded") === "true" && expanded === "false";
+      if (closed && (active === meter || active === document.body))
+        ring.focus({ preventScroll: true });
+      ring.setAttribute("aria-expanded", expanded);
+    }
     const fill = ring.querySelector(".vn-context-fill");
     fill.setAttribute("stroke-dashoffset", String(pct == null ? C : C * (1 - pct / 100)));
     const label = pct == null ? formatTokens(used) : `${Math.round(pct)}%`;
@@ -110,6 +150,7 @@ function createContextRing(root, api) {
         : `${formatTokens(used)} of ${formatTokens(limit)} tokens (${Math.round(pct)}%)`,
     ];
     if (usage.cachedInputTokens) lines.push(`${formatTokens(usage.cachedInputTokens)} cached`);
+    if (compactAt && used < compactAt) lines.push(`Auto-compacts at ${formatTokens(compactAt)}`);
     if (usage.estimated) lines.push("Estimated");
     const offerCompact = level === "critical" && (compacting || canCompact());
     compact.hidden = !offerCompact;

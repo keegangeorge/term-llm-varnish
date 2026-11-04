@@ -181,9 +181,13 @@ export function formatDuration(ms) {
   return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
 }
 
+// Same abbreviations as the app's context card (35.2k, 160k, 1.1B), so the
+// ring, its tip and the card agree. The unit is picked after rounding.
 export function formatTokens(n) {
   if (!Number.isFinite(n)) return "0";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(n >= 100_000 ? 0 : 1)}k`;
-  return String(n);
+  const abs = Math.abs(n);
+  for (const [scale, suffix] of [[1e9, "B"], [1e6, "M"], [1e3, "k"]]) {
+    if (abs >= scale * 0.9995) return `${(n / scale).toFixed(1).replace(/\.0$/, "")}${suffix}`;
+  }
+  return String(Math.round(n));
 }
