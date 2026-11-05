@@ -2995,6 +2995,17 @@ select optgroup {
 .vn-context:focus-visible .vn-context-tip,
 .vn-context[data-pinned] .vn-context-tip { opacity: 1; transform: none; }
 
+/* The ring sits before other toolbar controls. On narrow screens, use the
+ * whole toolbar as the tooltip's containing block so its text stays on screen. */
+@media (max-width: 480px) {
+  .vn-composer-bar { position: relative; }
+  .vn-context { position: static; }
+  .vn-context-tip {
+    right: 8px;
+    max-width: min(280px, calc(100% - 16px));
+  }
+}
+
 /* A click opens the app's context card (composer.js), so the ring is a real
  * button: pointer, accent-tinted while its card is open, tip out of the way. */
 .vn-context { cursor: pointer; }
