@@ -4190,6 +4190,10 @@ input[type="radio"] { accent-color: var(--vn-accent); }
     max-width: calc(100vw - 1rem);
   }
 
+  :root[data-vn-runtime-anchor] .chip-popover-runtime .runtime-popover-heading {
+    white-space: normal;
+  }
+
   .vn-popover {
     left: 0.5rem !important;
     right: 0.5rem !important;
