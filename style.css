@@ -4195,6 +4195,16 @@ input[type="radio"] { accent-color: var(--vn-accent); }
     inset: auto 0.5rem max(0.5rem, env(safe-area-inset-bottom, 0.5rem)) 0.5rem !important;
   }
 
+  :root[data-vn-runtime-anchor] .chip-popover-runtime {
+    /* Native dialog sizing can exceed the space between the sheet gutters. */
+    min-width: 0;
+    max-width: calc(100vw - 1rem);
+  }
+
+  :root[data-vn-runtime-anchor] .chip-popover-runtime .runtime-popover-heading {
+    white-space: normal;
+  }
+
   .vn-popover {
     left: 0.5rem !important;
     right: 0.5rem !important;
