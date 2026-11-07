@@ -296,6 +296,9 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
   }
 
   function onKey(event) {
+    // IME confirmation and candidate navigation belong to the input method,
+    // not to the command palette (including Escape to cancel composition).
+    if (event.isComposing) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
       select((index + 1) % Math.max(1, items.length));
