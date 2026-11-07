@@ -31,6 +31,8 @@ export async function checkPaletteComposition(page) {
     await page.keyboard.press('ArrowUp');
     await page.keyboard.press('Enter');
     await page.locator('.modal.settings-modal').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => document.querySelector('.modal.settings-modal')?.contains(document.activeElement));
+    await page.waitForTimeout(250); // Let native modal entrance/focus setup settle.
     await page.keyboard.press('Escape');
     await page.locator('.modal.settings-modal').waitFor({ state: 'hidden' });
     return { trustedComposingKeys: ['ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Tab'], normalNavigation: true, normalActivation: true };
