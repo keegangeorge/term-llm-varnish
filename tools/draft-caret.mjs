@@ -10,11 +10,8 @@ export async function checkDraftCaret(page) {
     for (const command of ['/rename', '/new']) {
       await composer.fill(draft);
       await composer.focus();
-      // Let host autosizing settle, then establish a genuinely visible caret.
-      await page.waitForFunction(() => {
-        const e = document.querySelector('.composer .prompt');
-        return e && e.clientHeight > 0;
-      });
+      // Allow the host's input-driven autosize to run before moving the caret.
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       await page.keyboard.press('Control+End');
       await page.keyboard.press('ArrowLeft');
       await page.keyboard.press('ArrowRight');
@@ -31,6 +28,7 @@ export async function checkDraftCaret(page) {
         return e?.value === text && document.activeElement === e;
       }, expected);
       await page.locator('.vn-pal-overlay').waitFor({ state: 'detached' });
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       const state = await composer.evaluate((e) => ({
         value: e.value, start: e.selectionStart, end: e.selectionEnd,
         top: e.scrollTop, height: e.scrollHeight, client: e.clientHeight,
