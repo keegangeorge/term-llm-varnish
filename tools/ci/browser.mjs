@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { BASE, allowedRequest } from './policy.mjs';
 import { checkAppearance } from '../check-appearance.mjs';
 import { checkOverlayEscape } from '../overlay-escape.mjs';
+import { checkDraftCaret } from '../draft-caret.mjs';
 
 const out = new URL('../out/ci/', import.meta.url);
 fs.mkdirSync(out, { recursive: true });
@@ -59,6 +60,7 @@ try {
         await page.setViewportSize(options.viewport);
       }
       const overlayDismissal = await checkOverlayEscape(page);
+      const draftCaret = await checkDraftCaret(page);
       await page.screenshot({ path: new URL(`${name}.png`, out).pathname });
       // Actual safe UI commands, not injected modal markup or synthetic key handlers.
       await page.keyboard.press('Control+k');
@@ -81,7 +83,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, appearance, appearanceResized, overlayDismissal, reads: [...reads].sort() });
+      report.results.push({ name, pass: true, appearance, appearanceResized, overlayDismissal, draftCaret, reads: [...reads].sort() });
     } catch (error) {
       failed = true;
       report.results.push({ name, pass: false, error: String(error), pageErrors: errors });

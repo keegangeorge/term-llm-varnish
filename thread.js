@@ -48,6 +48,9 @@ export function setComposerText(root, text, { focus = true } = {}) {
   if (focus) {
     ta.focus({ preventScroll: true });
     ta.setSelectionRange(text.length, text.length);
+    // Setting a textarea's value can reset its scroll without moving the caret.
+    // Keep the focused insertion point visible when a draft exceeds its height.
+    ta.scrollTop = ta.scrollHeight;
   }
   return true;
 }
