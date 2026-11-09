@@ -119,6 +119,44 @@ export function runPaletteLifecycleTests(createPalette) {
         results.push(`${interruption}/${stage}`);
       }
     }
+    for (const stage of ["timer", "first-frame", "second-frame"]) {
+      for (const focusChange of ["none", "other", "removed-origin"]) {
+        timers.clear(); frames.clear();
+        root = document.createElement("section");
+        root.innerHTML = '<textarea class="prompt"></textarea><button class="other">Other</button><aside class="sidebar"><input class="sidebar-search-input"></aside>';
+        document.body.append(root);
+        const origin = root.querySelector("textarea");
+        const other = root.querySelector("button");
+        origin.focus();
+        palette = createPalette(root, { theme: { scheme: "dark", type: "compact", accent: "indigo" }, thread: {} });
+        palette.open();
+        const input = document.querySelector(".vn-pal-overlay:not([data-leaving]) .vn-pal-input");
+        input.value = "cancelled-focus-handoff-12345";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        [...document.querySelectorAll(".vn-pal-overlay:not([data-leaving]) .vn-pal-item")].find((item) => item.textContent.includes("Search all chats for")).click();
+        if (stage !== "timer") {
+          const action = [...timers.entries()].find(([, entry]) => entry.delay === 30);
+          timers.delete(action[0]); action[1].callback();
+          if (stage === "second-frame") take(frames)[0]();
+        }
+        if (focusChange === "other") other.focus();
+        if (focusChange === "removed-origin") origin.remove();
+        palette.open();
+        // Let the departing overlay disappear before Escape, just as it does
+        // in the actual UI. Never restore focus to that transient input.
+        for (const [id, entry] of timers) if (entry.delay === 160) { timers.delete(id); entry.callback(); }
+        const current = document.querySelector(".vn-pal-overlay:not([data-leaving]) .vn-pal-input");
+        current.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        for (const callback of take(timers)) callback();
+        assert(!frames.size, "Reopening cancels pending search frames");
+        assert(root.querySelector(".sidebar-search-input").value === "", "Cancelled search did not run");
+        if (focusChange === "none") assert(document.activeElement === origin, `${stage}: composer origin restored`);
+        else if (focusChange === "other") assert(document.activeElement === other, `${stage}: deliberate intervening focus respected`);
+        else assert(document.activeElement !== origin && !document.querySelector(".vn-pal-overlay"), `${stage}: detached origin is not focused`);
+        palette.dispose(); root.remove(); root = null;
+        results.push(`return-focus/${stage}/${focusChange}`);
+      }
+    }
     return results;
   } finally {
     palette?.dispose();
