@@ -24,7 +24,7 @@ export async function checkAppearanceSync(page) {
       await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");
       await page.locator(".vn-pal-input").fill(command);
       const option = page.locator(".vn-pal-item").filter({
-        has: page.locator(".vn-pal-title").filter({ hasText: command }),
+        has: page.getByText(command, { exact: true }),
       });
       await option.waitFor({ state: "visible" });
       assert.equal(await option.count(), 1, `Unique palette action: ${command}`);
