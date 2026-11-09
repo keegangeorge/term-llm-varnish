@@ -300,6 +300,9 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
   }
 
   function onKey(event) {
+    // IME confirmation and candidate navigation belong to the input method,
+    // not to the command palette (including Escape to cancel composition).
+    if (event.isComposing) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
       select((index + 1) % Math.max(1, items.length));
@@ -320,9 +323,17 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
 
   function open() {
     if (disposed) return;
+    const active = document.activeElement;
+    // Reopening can supersede an action before its focus handoff. The old
+    // input is leaving (or already removed with reduced motion), not a useful
+    // return target. Keep the connected origin unless focus moved elsewhere.
+    const keepOrigin = restoreFocus?.isConnected && (
+      active?.closest(".vn-pal-overlay[data-leaving]") ||
+      (active === document.body && (actionTimer !== null || handoffFrame !== null))
+    );
     cancelPendingAction();
     if (overlay) return close();
-    restoreFocus = document.activeElement;
+    if (!keepOrigin) restoreFocus = active;
     index = 0;
     input = el("input", {
       class: "vn-pal-input",
