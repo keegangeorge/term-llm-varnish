@@ -272,6 +272,10 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     input.setAttribute("aria-activedescendant", items.length ? `vn-pal-${index}` : "");
   }
 
+  function revealSelection() {
+    list?.querySelector(`#vn-pal-${index}`)?.scrollIntoView({ block: "nearest" });
+  }
+
   function select(i, scroll = true) {
     if (i === index) return;
     list.querySelector(`#vn-pal-${index}`)?.setAttribute("aria-selected", "false");
@@ -279,7 +283,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     const row = list.querySelector(`#vn-pal-${index}`);
     row?.setAttribute("aria-selected", "true");
     input.setAttribute("aria-activedescendant", `vn-pal-${index}`);
-    if (scroll) row?.scrollIntoView({ block: "nearest" });
+    if (scroll) revealSelection();
   }
 
   function choose(i) {
@@ -356,6 +360,9 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     });
     input.addEventListener("keydown", onKey);
     document.body.append(overlay);
+    // Resizing can shrink the list without changing the active option. Keep
+    // that option visible just as keyboard navigation does, without refocusing.
+    window.addEventListener("resize", revealSelection);
     render();
     input.focus();
   }
@@ -365,6 +372,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     if (!overlay) return;
     const o = overlay;
     overlay = null;
+    window.removeEventListener("resize", revealSelection);
     if (reducedMotion.matches) o.remove();
     else {
       o.setAttribute("data-leaving", "");
