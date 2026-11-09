@@ -26,6 +26,7 @@ export async function checkAppearanceSync(page) {
       const option = page.locator(".vn-pal-item").filter({
         has: page.locator(".vn-pal-title").filter({ hasText: command }),
       });
+      await option.waitFor({ state: "visible" });
       assert.equal(await option.count(), 1, `Unique palette action: ${command}`);
       await page.keyboard.press("Enter");
       await page.locator(".vn-pal-overlay").waitFor({ state: "detached" });
@@ -63,6 +64,10 @@ export async function checkAppearanceSync(page) {
     assert.equal(await picker.locator(`[data-accent="${accentIds[1]}"]`).getAttribute("aria-checked"), "true");
   } finally {
     await origin.dispose();
+    if (await page.locator(".vn-pal-overlay:not([data-leaving])").count()) {
+      await page.keyboard.press("Escape");
+      await page.locator(".vn-pal-overlay").waitFor({ state: "detached" });
+    }
     // Leave the host's system scheme for subsequent configured checks.
     if (await picker.count()) {
       await picker.locator('[data-scheme="system"]').click();
