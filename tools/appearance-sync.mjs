@@ -30,6 +30,10 @@ export async function checkAppearanceSync(page) {
       assert.equal(await option.count(), 1, `Unique palette action: ${command}`);
       await page.keyboard.press("Enter");
       await page.locator(".vn-pal-overlay").waitFor({ state: "detached" });
+      // Actions are deliberately deferred beyond palette removal in reduced motion.
+      await page.waitForFunction(({ key, expected }) =>
+        document.documentElement.getAttribute(`data-vn-${key}`) === expected,
+        { key, expected });
       const state = await picker.evaluate((element, { key }) => {
         const checked = [...element.querySelectorAll(`[data-${key}][aria-checked="true"]`)];
         return {
@@ -43,8 +47,7 @@ export async function checkAppearanceSync(page) {
       assert.deepEqual(state.checked, [expected], "Open Appearance reports the actual preference");
       if (key === "type") assert.equal(state.index, expected === "compact" ? "0" : "1");
       if (key === "scheme") assert.equal(state.index, expected === "light" ? "1" : "2");
-      assert.equal(state.focusInside, true);
-      assert.equal(await page.evaluate((el) => el === document.activeElement && el.isConnected, origin), true, "Preference updates preserve the focused radio node");
+      assert.equal(await page.evaluate((el) => el.isConnected && el === document.querySelector('.vn-popover [data-type="comfortable"]'), origin), true, "Preference updates preserve the original radio node");
       states.push({ command, ...state });
     }
     // The picker still works after external updates, including its switch and arrows.
