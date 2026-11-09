@@ -352,6 +352,7 @@ function createThemePicker(theme, mount) {
   return {
     ensureButton,
     dispose() {
+      unsubscribe();
       close({ restoreFocus: false });
       window.removeEventListener("resize", onResize);
       document.querySelectorAll(".vn-theme-btn").forEach((b) => b.remove());
