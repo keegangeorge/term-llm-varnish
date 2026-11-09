@@ -353,6 +353,9 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     input.addEventListener("input", () => {
       index = 0;
       render();
+      // Query edits select the first result; do not retain the previous
+      // result set's scroll offset with that selection hidden above it.
+      list.scrollTop = 0;
     });
     input.addEventListener("keydown", onKey);
     document.body.append(overlay);
