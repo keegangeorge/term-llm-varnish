@@ -164,6 +164,9 @@ function createThemePicker(theme, mount) {
     const b = backdrop;
     popover = null;
     backdrop = null;
+    // The exit animation keeps the panel mounted, but dismissal ends its
+    // interaction lifetime immediately (including pointer and keyboard focus).
+    p.inert = true;
     anchor?.setAttribute("aria-expanded", "false");
     document.removeEventListener("keydown", onKey);
     if (restoreFocus) anchor?.focus({ preventScroll: true });
