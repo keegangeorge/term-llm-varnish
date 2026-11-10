@@ -361,6 +361,14 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
         close();
       }
     });
+    // Noninteractive panel content can receive a pointer click without being
+    // focusable. Restore the combobox after that native focus change so its
+    // keyboard controls keep working. Do not prevent pointer defaults: the input
+    // still supports caret/selection and the list keeps native touch/scrollbar
+    // behavior. Choosing an option closes the overlay before this bubbles.
+    panel.addEventListener("click", (event) => {
+      if (overlay && event.target !== input) input.focus({ preventScroll: true });
+    });
     input.addEventListener("input", () => {
       index = 0;
       render();
