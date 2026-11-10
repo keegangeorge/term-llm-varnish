@@ -392,7 +392,9 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     if (mod && !event.altKey && !event.shiftKey && (event.key === "k" || event.key === "K")) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      open();
+      // Auto-repeat belongs to the same physical shortcut press. Consume it
+      // above so the host's Widgets shortcut cannot run behind the palette.
+      if (!event.repeat) open();
     }
   };
   window.addEventListener("keydown", onGlobalKey, true);
