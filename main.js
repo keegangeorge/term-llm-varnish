@@ -217,6 +217,12 @@ function createThemePicker(theme, mount) {
       </button>`;
   }
 
+  function updateTabStops() {
+    popover.querySelectorAll('[role="radio"]').forEach((radio) => {
+      radio.tabIndex = radio.getAttribute("aria-checked") === "true" ? 0 : -1;
+    });
+  }
+
   function position() {
     if (!popover || !anchor) return;
     const r = anchor.getBoundingClientRect();
@@ -241,6 +247,7 @@ function createThemePicker(theme, mount) {
     popover.setAttribute("role", "dialog");
     popover.setAttribute("aria-label", "Appearance");
     render();
+    updateTabStops();
     popover.addEventListener("click", (event) => {
       const schemeBtn = event.target.closest("[data-scheme]");
       const accentBtn = event.target.closest("[data-accent]");
@@ -276,17 +283,19 @@ function createThemePicker(theme, mount) {
         popover.querySelector(".vn-swatch-name").textContent =
           ACCENTS.find((a) => a.id === theme.accent)?.name ?? "";
       }
+      updateTabStops();
     });
-    // Arrow keys move within each radio group.
+    // Arrow keys select within each radio group; Tab visits only its checked radio.
     popover.addEventListener("keydown", (event) => {
-      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
       const group = event.target.closest('[role="radiogroup"]');
       if (!group) return;
       const items = [...group.querySelectorAll('[role="radio"]')];
       const i = items.indexOf(event.target);
       if (i < 0) return;
       event.preventDefault();
-      const next = items[(i + (event.key === "ArrowRight" ? 1 : -1) + items.length) % items.length];
+      const forward = event.key === "ArrowRight" || event.key === "ArrowDown";
+      const next = items[(i + (forward ? 1 : -1) + items.length) % items.length];
       next.focus();
       next.click();
     });
