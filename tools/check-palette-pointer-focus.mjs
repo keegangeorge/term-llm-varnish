@@ -23,7 +23,15 @@ export async function checkPalettePointerFocus(page) {
   await prompt.fill(draft);
   for (const target of [".vn-pal-group", ".vn-pal-foot", ".vn-pal-search-icon", ".vn-pal-search .vn-kbd"]) {
     await open();
-    await overlay.locator(target).first().click();
+    const content = overlay.locator(target).first();
+    // The compact layout intentionally hides its keyboard-hint footer.
+    if (!(await content.isVisible())) {
+      assert.equal(target, ".vn-pal-foot");
+      states.push({ target, hidden: true });
+      await close();
+      continue;
+    }
+    await content.click();
     assert.equal(await input.evaluate(e => e === document.activeElement), true, `${target} keeps combobox focus`);
     const before = await input.getAttribute("aria-activedescendant");
     await page.keyboard.press("ArrowDown");
