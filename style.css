@@ -1288,6 +1288,7 @@ a {
 }
 
 .vn-popover[data-leaving] { animation: vn-pop-out 140ms ease-in both; }
+.vn-popover-backdrop[data-leaving] { animation: vn-fade-out 140ms ease-in both; }
 
 .vn-popover-backdrop {
   position: fixed;

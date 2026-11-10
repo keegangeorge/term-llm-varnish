@@ -18,12 +18,14 @@ export async function checkAppearanceExit(page) {
   assert(await trigger.evaluate((b) => b === document.activeElement), 'Departing control cannot reclaim focus');
   await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
   assert.deepEqual(await page.evaluate(() => ({ scheme: document.documentElement.dataset.vnScheme, storage: JSON.stringify(Object.entries(localStorage).sort()) })), before, 'Dismissed controls cannot change preferences');
-  await page.waitForFunction(() => !document.querySelector('.vn-popover'));
+  assert(await trigger.evaluate((b) => b === document.activeElement), 'Exit click shield prevents underlying focus changes');
+  await page.waitForFunction(() => !document.querySelector('.vn-popover, .vn-popover-backdrop'));
   await trigger.click();
   await page.locator('.vn-popover:not([data-leaving]) [data-scheme="dark"]').click();
   assert.equal(await page.evaluate(() => document.documentElement.dataset.vnScheme), 'dark', 'Reopened controls still work');
   await page.keyboard.press('Escape');
-  await page.waitForFunction(() => !document.querySelector('.vn-popover'));
+  assert(await trigger.evaluate((b) => b === document.activeElement), 'Exit click shield prevents underlying focus changes');
+  await page.waitForFunction(() => !document.querySelector('.vn-popover, .vn-popover-backdrop'));
   assert(await trigger.evaluate((b) => b === document.activeElement), 'Reopened picker restores trigger focus');
   return { dismissedInert: true, preferencePreserved: true, reopened: true };
 }
