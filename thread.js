@@ -302,6 +302,7 @@ export function createThread(root) {
         STARTERS.map((s) => {
           const b = el("button", { type: "button", class: "vn-starter", role: "listitem", text: s.label });
           b.addEventListener("click", () => {
+            if (composerText(root).trim() && !confirm("Replace your current draft with this starter?")) return;
             if (s.command) runSlash(s.command);
             else setComposerText(root, s.text);
           });
