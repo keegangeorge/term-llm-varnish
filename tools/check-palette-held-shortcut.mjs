@@ -33,7 +33,7 @@ export async function checkPaletteHeldShortcut(page) {
     await input.waitFor({ state: 'visible' });
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Escape');
-    await page.locator('.vn-pal-overlay').waitFor({ state: 'detached' });
+    await page.waitForFunction(() => document.querySelectorAll('.vn-pal-overlay').length === 0);
     assert(await prompt.evaluate(e => e === document.activeElement));
     assert.equal(await prompt.inputValue(), draft, 'Composer draft is preserved');
     return { heldOpen: true, queryRetained: true, separatePressToggles: true, heldClosed: true, reopened: true, focusRestored: true, composerPreserved: true };
