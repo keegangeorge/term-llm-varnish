@@ -7,7 +7,7 @@ export async function checkPaletteExit(page) {
   const composer = page.locator('.composer .prompt');
   const draft = await composer.inputValue();
   await composer.focus();
-  const scheme = await page.locator('html').getAttribute('data-vn-mode');
+  const scheme = await page.locator('html').getAttribute('data-vn-scheme');
   await page.keyboard.press('Control+k');
   const old = await page.locator('.vn-pal-overlay:not([data-leaving])').elementHandle();
   const input = page.locator('.vn-pal-overlay:not([data-leaving]) .vn-pal-input');
@@ -25,7 +25,7 @@ export async function checkPaletteExit(page) {
   await page.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2);
   assert.equal(await old.getAttribute('data-native-shield'), 'true', 'Native pointer hits the leaving shield');
   await page.waitForTimeout(200);
-  assert.equal(await page.locator('html').getAttribute('data-vn-mode'), scheme, 'Dismissed option does not run');
+  assert.equal(await page.locator('html').getAttribute('data-vn-scheme'), scheme, 'Dismissed option does not run');
   assert(await composer.evaluate((node) => node === document.activeElement), 'Shield preserves restored focus');
   assert.equal(await composer.inputValue(), draft, 'Draft is unchanged');
   await page.keyboard.press('Control+k');
