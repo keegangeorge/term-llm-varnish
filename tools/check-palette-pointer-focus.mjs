@@ -53,7 +53,9 @@ export async function checkPalettePointerFocus(page) {
   // Pointer option activation still runs exactly the intended safe command.
   await open();
   await input.fill("Text size: Compact");
-  await overlay.locator(".vn-pal-item").first().click();
+  await overlay.locator(".vn-pal-item").filter({
+    has: page.locator(".vn-pal-title").filter({ hasText: /^Text size: Compact$/ }),
+  }).click();
   await page.locator(".vn-pal-overlay").waitFor({ state: "detached" });
   await page.waitForFunction(() => document.documentElement.getAttribute("data-vn-type") === "compact");
   assert.equal(await prompt.inputValue(), draft);
