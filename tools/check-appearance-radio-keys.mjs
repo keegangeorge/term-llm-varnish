@@ -44,7 +44,7 @@ export async function checkAppearanceRadioKeys(page) {
     assert(await groups.nth(g).locator('[aria-checked="true"]').evaluate(e => e === document.activeElement));
   }
   await page.keyboard.press('Escape');
-  await picker.waitFor({ state: 'detached' });
+  await page.locator('.vn-popover').waitFor({ state: 'detached' });
   assert(await button.evaluate(e => e === document.activeElement));
   await page.keyboard.press('Enter');
   await page.locator('.vn-popover:not([data-leaving])').waitFor();
