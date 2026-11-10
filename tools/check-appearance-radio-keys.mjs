@@ -10,6 +10,14 @@ export async function checkAppearanceRadioKeys(page) {
     const group = groups.nth(g), radios = group.locator('[role="radio"]');
     const count = await radios.count();
     await radios.first().click();
+    for (let index = 0; index < count; index++) {
+      assert(await radios.nth(index).evaluate(e => {
+        const r = e.getBoundingClientRect(), p = e.closest('.vn-popover').getBoundingClientRect();
+        return e === document.activeElement && r.top >= Math.max(0, p.top) &&
+          r.bottom <= Math.min(innerHeight, p.bottom) && r.left >= 0 && r.right <= innerWidth;
+      }), 'Every radio remains keyboard reachable and visible, including in short viewports');
+      await page.keyboard.press('ArrowDown');
+    }
     for (const [key, index] of [['ArrowUp', count - 1], ['ArrowDown', 0], ['ArrowRight', 1], ['ArrowLeft', 0]]) {
       await page.keyboard.press(key);
       assert(await radios.nth(index).evaluate(e => e === document.activeElement));
