@@ -200,7 +200,7 @@ export function createThread(root) {
       type: "button", class: "vn-msg-btn", "aria-label": "Edit message", html: SVG.edit,
     });
     editBtn.addEventListener("pointerenter", () => {
-      editBtn.title = article === lastUserMessage() && !isRunning(root)
+      editBtn.title = article === lastUserMessage() && !isRunning(root) && !composerText(root).trim()
         ? "Edit and resend (undoes the latest turn)"
         : "Edit as a new message";
     });
