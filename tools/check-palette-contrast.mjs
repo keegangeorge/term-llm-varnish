@@ -26,6 +26,12 @@ export async function checkPaletteContrast(page) {
         assert.equal(measure.style, 'solid', 'Forced-colors selection needs a visible indicator');
         assert.equal(measure.width, '2px');
         assert.equal(measure.offset, '-2px');
+        const marks = await page.locator('.vn-pal-title mark').evaluateAll((elements) => elements.map((e) => {
+          const s = getComputedStyle(e);
+          return { color: s.color, background: s.backgroundColor, adjust: s.forcedColorAdjust };
+        }));
+        assert(marks.length > 0);
+        assert(marks.every((s) => s.color !== s.background && !s.background.startsWith('rgba') && s.adjust === 'auto'), 'Matched text retains an opaque contrasting system-color pair');
         assert.equal(await page.locator('.vn-pal-item[aria-selected="false"]').first().evaluate((e) => getComputedStyle(e).outlineStyle), 'none');
       } else {
         assert.equal(measure.style, 'none', 'Ordinary themes keep their existing fill-only selection');

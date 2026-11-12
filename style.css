@@ -3629,15 +3629,6 @@ select optgroup {
 .vn-pal-item[aria-selected="true"] { background: var(--vn-accent-soft); }
 .vn-pal-item[aria-selected="true"] .vn-pal-icon { color: var(--vn-accent); }
 
-/* Forced colors removes the translucent selection fill. Keep keyboard selection
-   visible with a system-color outline without opting out of the user's palette. */
-@media (forced-colors: active) {
-  .vn-pal-item[aria-selected="true"] {
-    outline: 2px solid Highlight;
-    outline-offset: -2px;
-  }
-}
-
 .vn-pal-icon {
   display: grid;
   place-items: center;
@@ -3672,6 +3663,20 @@ select optgroup {
   background: none;
   color: var(--vn-accent);
   font-weight: 650;
+}
+
+/* Forced colors removes the translucent selection fill. Keep selection and
+   matched text visible without opting out of the user's system palette. */
+@media (forced-colors: active) {
+  .vn-pal-item[aria-selected="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .vn-pal-title mark {
+    background: Mark;
+    color: MarkText;
+  }
 }
 
 .vn-pal-item[data-current] .vn-pal-title::after {
