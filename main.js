@@ -466,7 +466,9 @@ function createComposerBar(root) {
       const select = pop.querySelector(selector);
       const field = select?.closest(".runtime-popover-field");
       if (!field) continue;
-      let mark = field.querySelector(":scope > .vn-field-mark");
+      // Newer hosts wrap the native select in .control-select (with its own
+      // chevron); find the mark wherever it was placed so it is created once.
+      let mark = field.querySelector(".vn-field-mark");
       if (!key) {
         mark?.remove();
         continue;
