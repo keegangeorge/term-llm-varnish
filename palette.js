@@ -158,14 +158,12 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     }
 
     // Chats (as loaded in the sidebar)
-    const seen = new Set();
+    // Display text is not chat identity: separate sessions can have the same
+    // title and metadata. Keep each sidebar button's own navigation action.
     for (const btn of root.querySelectorAll(".sidebar .session-row .session-btn")) {
       const title = btn.querySelector(".session-title")?.textContent.trim();
       if (!title) continue;
       const meta = btn.querySelector(".session-meta")?.textContent.trim() ?? "";
-      const key = `${title}|${meta}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
       out.push({ group: "Chats", icon: "chat", title, hint: meta, current: btn.classList.contains("active"), run: () => btn.click() });
     }
 
