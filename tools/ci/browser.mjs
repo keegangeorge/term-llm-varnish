@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { BASE, allowedRequest } from './policy.mjs';
 import { checkAppearance } from '../check-appearance.mjs';
 import { checkOverlayEscape } from '../overlay-escape.mjs';
+import { checkPaletteChats } from './palette-chats.mjs';
 import { checkPaletteComposition } from '../check-palette-composition.mjs';
 import { checkPaletteHeldShortcut } from '../check-palette-held-shortcut.mjs';
 
@@ -18,6 +19,7 @@ const browser = await chromium.launch({
 });
 let failed = false;
 try {
+  report.paletteChats = await checkPaletteChats(browser);
   for (const [name, options] of [
     ['desktop-dark', { viewport: { width: 1440, height: 900 }, colorScheme: 'dark' }],
     ['desktop-light', { viewport: { width: 1440, height: 900 }, colorScheme: 'light' }],
