@@ -5,6 +5,7 @@ import { BASE, allowedRequest } from './policy.mjs';
 import { checkAppearance } from '../check-appearance.mjs';
 import { checkOverlayEscape } from '../overlay-escape.mjs';
 import { checkPaletteFilterScroll } from '../palette-filter-scroll.mjs';
+import { checkStarterButtons } from '../starter-buttons.mjs';
 import { checkAppearanceSync } from '../appearance-sync.mjs';
 import { checkDraftCaret } from '../draft-caret.mjs';
 import { checkPaletteChats } from './palette-chats.mjs';
@@ -58,6 +59,7 @@ try {
       for (const selector of ['#appShell', '.composer .prompt', '.vn-theme-btn', '.vn-composer-bar']) {
         await page.locator(selector).first().waitFor({ state: 'attached' });
       }
+      const starterButtons = await checkStarterButtons(page);
       const appearance = await checkAppearance(page);
       let appearanceResized;
       if (name === 'desktop-dark') {
@@ -91,7 +93,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, appearance, appearanceResized, overlayDismissal, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, reads: [...reads].sort() });
+      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, overlayDismissal, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, reads: [...reads].sort() });
     } catch (error) {
       failed = true;
       report.results.push({ name, pass: false, error: String(error), pageErrors: errors });
