@@ -48,6 +48,14 @@ export function setComposerText(root, text, { focus = true } = {}) {
   if (focus) {
     ta.focus({ preventScroll: true });
     ta.setSelectionRange(text.length, text.length);
+    // The host autosizes after input; scroll only after that layout settles.
+    // Do not move a caret or focus that the user has since changed.
+    requestAnimationFrame(() => {
+      if (ta.isConnected && document.activeElement === ta && ta.value === text &&
+          ta.selectionStart === text.length && ta.selectionEnd === text.length) {
+        ta.scrollTop = ta.scrollHeight;
+      }
+    });
   }
   return true;
 }
@@ -298,9 +306,11 @@ export function createThread(root) {
   function decorateEmpty(empty) {
     let extras = empty.querySelector(":scope > .vn-empty");
     if (!extras) {
-      const starters = el("div", { class: "vn-starters", role: "list" },
+      // Keep each action's native button semantics; listitem overrides them in
+      // the accessibility tree even though keyboard activation still works.
+      const starters = el("div", { class: "vn-starters", role: "group", "aria-label": "Conversation starters" },
         STARTERS.map((s) => {
-          const b = el("button", { type: "button", class: "vn-starter", role: "listitem", text: s.label });
+          const b = el("button", { type: "button", class: "vn-starter", text: s.label });
           b.addEventListener("click", () => {
             if (composerText(root).trim() && !confirm("Replace your current draft with this starter?")) return;
             if (s.command) runSlash(s.command);
