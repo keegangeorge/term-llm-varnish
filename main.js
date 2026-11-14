@@ -63,6 +63,8 @@ function createTheme() {
   let type = read(KEYS.type, "comfortable") === "compact" ? "compact" : "comfortable";
   html.setAttribute("data-vn-type", type);
   let switchTimer = 0;
+  const listeners = new Set();
+  const notify = () => listeners.forEach((listener) => listener());
 
   const resolved = () =>
     scheme === "system" ? (systemDark.matches ? "dark" : "light") : scheme;
@@ -107,11 +109,19 @@ function createTheme() {
     }
   }
 
-  const onSystem = () => scheme === "system" && apply(true);
+  const onSystem = () => {
+    if (scheme !== "system") return;
+    apply(true);
+    notify();
+  };
   systemDark.addEventListener("change", onSystem);
   apply(false);
 
   return {
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
     get scheme() { return scheme; },
     get accent() { return accent; },
     get resolved() { return resolved(); },
@@ -120,25 +130,30 @@ function createTheme() {
       toolbar = next === "accent" ? "accent" : "neutral";
       write(KEYS.toolbar, toolbar);
       applyToolbar();
+      notify();
     },
     setScheme(next) {
       scheme = next;
       write(KEYS.scheme, next);
       apply(true);
+      notify();
     },
     setAccent(next) {
       accent = next;
       write(accentKey, next);
       apply(true);
       document.dispatchEvent(new CustomEvent("vn:accent-change"));
+      notify();
     },
     get type() { return type; },
     setType(next) {
       type = next === "compact" ? "compact" : "comfortable";
       write(KEYS.type, type);
       html.setAttribute("data-vn-type", type);
+      notify();
     },
     dispose() {
+      listeners.clear();
       systemDark.removeEventListener("change", onSystem);
       html.removeAttribute("data-vn-scheme");
       html.removeAttribute("data-vn-accent");
@@ -217,6 +232,28 @@ function createThemePicker(theme, mount) {
       </button>`;
   }
 
+  // Update controls in place: palette actions must not replace the focused radio.
+  function sync() {
+    if (!popover) return;
+    for (const [key, choices] of [["scheme", SCHEMES], ["type", TYPE_SCALES]]) {
+      popover.querySelectorAll(`[data-${key}]`).forEach((button) =>
+        button.setAttribute("aria-checked", String(button.dataset[key] === theme[key])),
+      );
+      popover.querySelector(`[data-${key}]`).closest(".vn-segment").style.setProperty(
+        "--vn-seg-index", String(choices.findIndex((choice) => choice.id === theme[key])),
+      );
+    }
+    popover.querySelectorAll("[data-accent]").forEach((button) => {
+      const accent = ACCENTS.find((choice) => choice.id === button.dataset.accent);
+      button.setAttribute("aria-checked", String(accent.id === theme.accent));
+      button.style.setProperty("--sw", theme.resolved === "light" ? accent.light : accent.dark);
+    });
+    popover.querySelector(".vn-swatch-name").textContent =
+      ACCENTS.find((accent) => accent.id === theme.accent)?.name ?? "";
+    popover.querySelector("[data-toolbar]").setAttribute("aria-checked", String(theme.toolbar === "accent"));
+  }
+  const unsubscribe = theme.subscribe(sync);
+
   function position() {
     if (!popover || !anchor) return;
     const r = anchor.getBoundingClientRect();
@@ -248,33 +285,12 @@ function createThemePicker(theme, mount) {
       const typeBtn = event.target.closest("[data-type]");
       if (typeBtn) {
         theme.setType(typeBtn.dataset.type);
-        popover.querySelectorAll("[data-type]").forEach((b) =>
-          b.setAttribute("aria-checked", String(b.dataset.type === theme.type)),
-        );
-        popover.querySelector(".vn-segment-type").style.setProperty(
-          "--vn-seg-index",
-          String(TYPE_SCALES.findIndex((t) => t.id === theme.type)),
-        );
       } else if (toolbarBtn) {
         theme.setToolbar(theme.toolbar === "accent" ? "neutral" : "accent");
-        toolbarBtn.setAttribute("aria-checked", String(theme.toolbar === "accent"));
       } else if (schemeBtn) {
         theme.setScheme(schemeBtn.dataset.scheme);
-        const focusId = schemeBtn.dataset.scheme;
-        popover.querySelectorAll("[data-scheme]").forEach((b) =>
-          b.setAttribute("aria-checked", String(b.dataset.scheme === focusId)),
-        );
-        popover.querySelector(".vn-segment").style.setProperty(
-          "--vn-seg-index",
-          String(SCHEMES.findIndex((s) => s.id === focusId)),
-        );
       } else if (accentBtn) {
         theme.setAccent(accentBtn.dataset.accent);
-        popover.querySelectorAll("[data-accent]").forEach((b) =>
-          b.setAttribute("aria-checked", String(b.dataset.accent === theme.accent)),
-        );
-        popover.querySelector(".vn-swatch-name").textContent =
-          ACCENTS.find((a) => a.id === theme.accent)?.name ?? "";
       }
     });
     // Arrow keys move within each radio group.
@@ -336,6 +352,7 @@ function createThemePicker(theme, mount) {
   return {
     ensureButton,
     dispose() {
+      unsubscribe();
       close({ restoreFocus: false });
       window.removeEventListener("resize", onResize);
       document.querySelectorAll(".vn-theme-btn").forEach((b) => b.remove());
@@ -458,7 +475,9 @@ function createComposerBar(root) {
       const select = pop.querySelector(selector);
       const field = select?.closest(".runtime-popover-field");
       if (!field) continue;
-      let mark = field.querySelector(":scope > .vn-field-mark");
+      // Newer hosts wrap the native select in .control-select (with its own
+      // chevron); find the mark wherever it was placed so it is created once.
+      let mark = field.querySelector(".vn-field-mark");
       if (!key) {
         mark?.remove();
         continue;
