@@ -168,9 +168,9 @@ export function el(tag, attrs = {}, children = []) {
   return node;
 }
 
-// The app is "running" while its Stop button is visible.
+// The host uses either a separate Stop button or a combined Send/Stop control.
 export function isRunning(root) {
-  return Boolean(root.querySelector(".composer .stop-btn.visible"));
+  return Boolean(root.querySelector(".composer .stop-btn.visible, .composer #sendBtn.stop"));
 }
 
 export function formatDuration(ms) {
