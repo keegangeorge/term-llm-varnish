@@ -4,14 +4,11 @@ import { chromium } from 'playwright';
 import { BASE, allowedRequest } from './policy.mjs';
 import { checkAppearance } from '../check-appearance.mjs';
 import { checkOverlayEscape } from '../overlay-escape.mjs';
-<<<<<<< HEAD
 import { checkStarterDraft } from '../check-starter-draft.mjs';
-=======
 import { checkStarterButtons } from '../starter-buttons.mjs';
 import { checkAppearanceSync } from '../appearance-sync.mjs';
 import { checkDraftCaret } from '../draft-caret.mjs';
 import { checkPaletteChats } from './palette-chats.mjs';
->>>>>>> origin/main
 import { checkPaletteComposition } from '../check-palette-composition.mjs';
 
 const out = new URL('../out/ci/', import.meta.url);
@@ -62,11 +59,8 @@ try {
       for (const selector of ['#appShell', '.composer .prompt', '.vn-theme-btn', '.vn-composer-bar']) {
         await page.locator(selector).first().waitFor({ state: 'attached' });
       }
-<<<<<<< HEAD
-      const starterDraft = await checkStarterDraft(page);
-=======
       const starterButtons = await checkStarterButtons(page);
->>>>>>> origin/main
+      const starterDraft = await checkStarterDraft(page);
       const appearance = await checkAppearance(page);
       let appearanceResized;
       if (name === 'desktop-dark') {
