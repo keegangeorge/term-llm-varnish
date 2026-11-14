@@ -3109,7 +3109,26 @@ select optgroup {
   pointer-events: none;
 }
 
-.runtime-popover-field > .vn-field-mark svg { width: 14px; height: 14px; }
+.runtime-popover-field .vn-field-mark svg { width: 14px; height: 14px; }
+
+/* Hosts that wrap the select in .control-select: overlay inside the wrapper. */
+.runtime-popover-field .control-select > .vn-field-mark {
+  grid-row: 1;
+  grid-column: 1;
+  z-index: 1;
+  display: inline-flex;
+  align-self: center;
+  justify-self: start;
+  margin-left: 11px;
+  color: var(--vn-accent);
+  pointer-events: none;
+}
+
+.runtime-popover-field .control-select > .vn-field-mark + .runtime-popover-select {
+  grid-row: 1;
+  grid-column: 1;
+  padding-left: 33px;
+}
 
 .runtime-popover-field > .vn-field-mark + .runtime-popover-select {
   grid-row: 2;
