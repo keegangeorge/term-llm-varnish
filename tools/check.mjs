@@ -105,7 +105,6 @@ const OWN_UI = [
 ];
 // Thread hooks only exist when there is a conversation; checked if present.
 const THREAD_HOOKS = [
-  [".messages > .message.user", ".messages > .message.user .vn-user-actions"],
   [".markdown-body pre > code", ".markdown-body pre[data-vn-code] .vn-code-head"],
   [".tool-group .tool-group-toggle", ".tool-group-toggle"],
 ];
@@ -134,6 +133,10 @@ try {
   const { p, errors } = await page({ viewport: { width: 1440, height: 900 }, colorScheme: "dark" });
   for (const sel of APP_HOOKS) ok(`app hook ${sel}`, (await p.locator(sel).count()) > 0);
   for (const sel of OWN_UI) ok(`varnish ui ${sel}`, (await p.locator(sel).count()) > 0);
+  for (const article of await p.locator(".messages > .message.user").all()) {
+    const supported = (await article.locator(".message-text").count()) > 0;
+    ok("user actions match raw-source capability", (await article.locator(":scope > .vn-user-actions").count()) === (supported ? 1 : 0));
+  }
   for (const [need, expect] of THREAD_HOOKS) {
     if ((await p.locator(need).count()) === 0) continue;
     ok(`decorated ${expect}`, (await p.locator(expect).count()) > 0);

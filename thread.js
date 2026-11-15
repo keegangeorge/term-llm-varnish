@@ -174,8 +174,17 @@ export function createThread(root) {
     return true;
   }
 
+  // Newer hosts may render only Markdown and provide their own lossless Copy.
+  // An absent raw source is unsupported; an existing empty source is valid.
+  function userMessageText(article) {
+    if (!article.isConnected || !root.contains(article) ||
+        !article.matches(".messages > .message.user")) return null;
+    return article.querySelector(".message-text")?.textContent ?? null;
+  }
+
   function editMessage(article) {
-    const text = article.querySelector(".message-text")?.textContent ?? "";
+    const text = userMessageText(article);
+    if (text === null) return;
     const isLast = article === lastUserMessage();
     if (isLast && !isRunning(root) && !composerText(root).trim()) {
       const ok = confirm(
@@ -191,12 +200,18 @@ export function createThread(root) {
   }
 
   function decorateUser(article) {
-    if (article.querySelector(":scope > .vn-user-actions")) return;
+    const actions = article.querySelector(":scope > .vn-user-actions");
+    if (userMessageText(article) === null) {
+      actions?.remove();
+      return;
+    }
+    if (actions) return;
     const copyBtn = el("button", {
       type: "button", class: "vn-msg-btn", "aria-label": "Copy message", title: "Copy", html: SVG.copy,
     });
     copyBtn.addEventListener("click", async () => {
-      const text = article.querySelector(".message-text")?.textContent ?? "";
+      const text = userMessageText(article);
+      if (text === null) return;
       try {
         await navigator.clipboard.writeText(text);
         flash(copyBtn, true);
