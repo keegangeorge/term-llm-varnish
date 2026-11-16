@@ -5,10 +5,12 @@ import { BASE, allowedRequest } from './policy.mjs';
 import { checkAppearance } from '../check-appearance.mjs';
 import { checkOverlayEscape } from '../overlay-escape.mjs';
 import { checkAppearanceRadioKeys } from '../check-appearance-radio-keys.mjs';
+import { checkPaletteResize } from '../palette-resize.mjs';
 import { checkPaletteFilterScroll } from '../palette-filter-scroll.mjs';
 import { checkStarterButtons } from '../starter-buttons.mjs';
 import { checkAppearanceSync } from '../appearance-sync.mjs';
 import { checkDraftCaret } from '../draft-caret.mjs';
+
 import { checkPaletteChats } from './palette-chats.mjs';
 import { checkPaletteComposition } from '../check-palette-composition.mjs';
 
@@ -69,9 +71,11 @@ try {
       }
       const appearanceRadioKeys = await checkAppearanceRadioKeys(page);
       const overlayDismissal = await checkOverlayEscape(page);
+      const paletteResize = await checkPaletteResize(page);
       const paletteFilterScroll = await checkPaletteFilterScroll(page);
       const appearanceSync = await checkAppearanceSync(page);
       const draftCaret = await checkDraftCaret(page);
+
       const paletteComposition = await checkPaletteComposition(page);
       await page.screenshot({ path: new URL(`${name}.png`, out).pathname });
       // Actual safe UI commands, not injected modal markup or synthetic key handlers.
@@ -95,7 +99,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, appearanceRadioKeys, overlayDismissal, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, reads: [...reads].sort() });
+      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, appearanceRadioKeys, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, reads: [...reads].sort() });
     } catch (error) {
       failed = true;
       report.results.push({ name, pass: false, error: String(error), pageErrors: errors });
