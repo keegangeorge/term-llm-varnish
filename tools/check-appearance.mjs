@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-// Run against the real Appearance UI; native Tab must scroll every control into view.
+// Run against the real Appearance UI; native Tab must scroll each group's checked radio and the switch into view.
 export async function checkAppearance(page, resizeTo) {
   const button = page.locator('.vn-theme-btn');
   await button.click();
@@ -24,7 +24,7 @@ export async function checkAppearance(page, resizeTo) {
   assert(initial.top >= 7 && initial.bottom <= initial.height - 7, 'Appearance panel must fit vertically');
   assert(initial.left >= 7 && initial.right <= initial.width - 7, 'Appearance panel must fit horizontally');
   assert(initial.headingTop >= initial.top && initial.headingBottom <= initial.bottom, 'Appearance heading must be visible when opened');
-  const controls = panel.locator('button');
+  const controls = panel.locator('button:not([tabindex="-1"])');
   const count = await controls.count();
   assert(count > 0, 'Appearance has real controls');
   await controls.first().focus();
