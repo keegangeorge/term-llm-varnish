@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { BASE, allowedRequest } from './policy.mjs';
 import { checkAppearance } from '../check-appearance.mjs';
 import { checkOverlayEscape } from '../overlay-escape.mjs';
+import { checkAppearanceRadioKeys } from '../check-appearance-radio-keys.mjs';
 import { checkPaletteResize } from '../palette-resize.mjs';
 import { checkPaletteFilterScroll } from '../palette-filter-scroll.mjs';
 import { checkStarterButtons } from '../starter-buttons.mjs';
@@ -68,6 +69,7 @@ try {
         appearanceResized = await checkAppearance(page, { width: 844, height: 320 });
         await page.setViewportSize(options.viewport);
       }
+      const appearanceRadioKeys = await checkAppearanceRadioKeys(page);
       const overlayDismissal = await checkOverlayEscape(page);
       const paletteResize = await checkPaletteResize(page);
       const paletteFilterScroll = await checkPaletteFilterScroll(page);
@@ -97,7 +99,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, reads: [...reads].sort() });
+      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, appearanceRadioKeys, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, reads: [...reads].sort() });
     } catch (error) {
       failed = true;
       report.results.push({ name, pass: false, error: String(error), pageErrors: errors });
