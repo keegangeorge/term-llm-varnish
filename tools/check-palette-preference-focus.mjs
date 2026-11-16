@@ -33,7 +33,7 @@ export async function checkPalettePreferenceFocus(page) {
   await radio.focus();
   await choose('Appearance: Light', radio, 'scheme', 'light');
   await page.keyboard.press('ArrowRight');
-  assert.equal(await page.locator('html').getAttribute('data-vn-scheme'), 'system', 'Returned picker focus accepts native arrow navigation');
+  assert.equal(await page.locator('.vn-popover:not([data-leaving]) [data-scheme="system"]').getAttribute('aria-checked'), 'true', 'Returned picker focus accepts native arrow navigation');
   assert(await page.locator('.vn-popover:not([data-leaving]) [data-scheme="system"]').evaluate((element) => element === document.activeElement));
   await page.keyboard.press('Escape');
   await page.locator('.vn-popover').waitFor({ state: 'detached' });
