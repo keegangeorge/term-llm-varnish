@@ -9,6 +9,8 @@ import { checkAppearanceSync } from '../appearance-sync.mjs';
 import { checkDraftCaret } from '../draft-caret.mjs';
 import { checkPaletteChats } from './palette-chats.mjs';
 import { checkPaletteComposition } from '../check-palette-composition.mjs';
+import { checkPalettePreferenceFocus } from '../check-palette-preference-focus.mjs';
+import { checkPalettePreferenceFocus } from '../check-palette-preference-focus.mjs';
 
 const out = new URL('../out/ci/', import.meta.url);
 fs.mkdirSync(out, { recursive: true });
@@ -69,6 +71,8 @@ try {
       const appearanceSync = await checkAppearanceSync(page);
       const draftCaret = await checkDraftCaret(page);
       const paletteComposition = await checkPaletteComposition(page);
+      const palettePreferenceFocus = await checkPalettePreferenceFocus(page);
+      const palettePreferenceFocus = await checkPalettePreferenceFocus(page);
       await page.screenshot({ path: new URL(`${name}.png`, out).pathname });
       // Actual safe UI commands, not injected modal markup or synthetic key handlers.
       await page.keyboard.press('Control+k');
@@ -91,7 +95,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, overlayDismissal, appearanceSync, draftCaret, paletteComposition, reads: [...reads].sort() });
+      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, overlayDismissal, appearanceSync, draftCaret, paletteComposition, palettePreferenceFocus, reads: [...reads].sort() });
     } catch (error) {
       failed = true;
       report.results.push({ name, pass: false, error: String(error), pageErrors: errors });
