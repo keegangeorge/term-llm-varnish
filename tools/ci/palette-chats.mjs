@@ -27,7 +27,7 @@ export async function checkPaletteChats(browser) {
         const { runPaletteChatTests } = await import('/tools/palette-chats.js');
         return runPaletteChatTests(createPalette);
       });
-      assert.equal(cases.length, 4);
+      assert.equal(cases.length, 5);
       assert.deepEqual(errors, []);
       results.push({ motion, cases });
     } finally {
