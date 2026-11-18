@@ -32,6 +32,8 @@ for f in "${FILES[@]}"; do cp "$HERE/$f" "$DEST/$f"; done
 cp "$HERE"/fonts/*.woff2 "$HERE/fonts/OFL.txt" "$DEST/fonts/"
 # Optional, untracked per-machine config (node default accents).
 if [ -f "$HERE/local.json" ]; then cp "$HERE/local.json" "$DEST/local.json"; fi
+# Optional, untracked pictures that local.json's nodeImages points at.
+if [ -d "$HERE/local" ]; then mkdir -p "$DEST/local" && cp -R "$HERE/local/." "$DEST/local/"; fi
 # Remove files from older versions that are no longer shipped.
 for f in "$DEST"/*.js; do
   name="$(basename "$f")"

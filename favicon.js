@@ -71,19 +71,26 @@ export function createNodeFavicon(root, nodeId = NODE_ID) {
     const icon = root.querySelector('.hub-agent-link[aria-current="true"] .hub-agent-icon');
     const kind = icon?.dataset.vnKind;
     if (!icon || !kind) return null;
+    if (kind === "image") {
+      // A local.json picture is the tab icon as it is: the picture says it all.
+      const src = getComputedStyle(icon).getPropertyValue("--vn-glyph").trim().match(/^url\(\s*["']?(.*?)["']?\s*\)$/)?.[1];
+      return src ? { kind, src } : null;
+    }
     return { kind, glyph: kind === "monogram" ? "" : glyphFrom(icon), initials: icon.dataset.vnInitials || "" };
   }
 
-  function apply(svg) {
-    if (svg === lastSvg) return;
-    lastSvg = svg;
-    const href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  function apply(svg, picture = null) {
+    const key = picture ?? svg;
+    if (key === lastSvg) return;
+    lastSvg = key;
+    const href = picture ?? `data:image/svg+xml,${encodeURIComponent(svg)}`;
     if (!link) {
       link = document.createElement("link");
       link.rel = "icon";
       document.head.append(link);
     }
-    link.type = "image/svg+xml";
+    if (picture) link.removeAttribute("type");
+    else link.type = "image/svg+xml";
     link.dataset.vnBase = href;
     if (!link.dataset.vnBadged) link.href = href;
   }
@@ -91,7 +98,9 @@ export function createNodeFavicon(root, nodeId = NODE_ID) {
   function sync() {
     const tile = currentTile();
     const accentId = nodeAccent(nodeId);
-    if (tile) {
+    if (tile?.kind === "image") {
+      apply(null, tile.src);
+    } else if (tile) {
       apply(tileSvg({ accentId, ...tile }));
     } else if (!lastSvg && performance.now() - startedAt > FALLBACK_AFTER_MS) {
       // No agent list (e.g. the sidebar is not rendered): initials of the node id.
