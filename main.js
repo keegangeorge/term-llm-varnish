@@ -179,6 +179,9 @@ function createThemePicker(theme, mount) {
     const b = backdrop;
     popover = null;
     backdrop = null;
+    // The exit animation keeps the panel mounted, but dismissal ends its
+    // interaction lifetime immediately (including pointer and keyboard focus).
+    p.inert = true;
     anchor?.setAttribute("aria-expanded", "false");
     document.removeEventListener("keydown", onKey);
     if (restoreFocus) anchor?.focus({ preventScroll: true });
@@ -188,8 +191,13 @@ function createThemePicker(theme, mount) {
       return;
     }
     p.setAttribute("data-leaving", "");
-    b.remove();
-    setTimeout(() => p.remove(), 220);
+    // Keep the dismissing backdrop as a click shield until the inert panel is
+    // gone; otherwise a click on its exit frame can activate the page below.
+    b.setAttribute("data-leaving", "");
+    setTimeout(() => {
+      p.remove();
+      b.remove();
+    }, 220);
   }
 
   function onKey(event) {
