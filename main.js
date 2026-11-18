@@ -7,7 +7,7 @@
 
 import {
   KEYS, ACCENTS, NODE_ID, html, reducedMotion, read, write, nodeAccent,
-  setApiPrefix, loadLocalConfig, NODE_ICONS, currentProviderSync, loadProviders, providerTypeSync,
+  setApiPrefix, loadLocalConfig, NODE_ICONS, NODE_IMAGES, currentProviderSync, loadProviders, providerTypeSync,
 } from "./util.js";
 import { logoKey, logoSvg } from "./logos.js";
 import { createThread } from "./thread.js";
@@ -179,6 +179,9 @@ function createThemePicker(theme, mount) {
     const b = backdrop;
     popover = null;
     backdrop = null;
+    // The exit animation keeps the panel mounted, but dismissal ends its
+    // interaction lifetime immediately (including pointer and keyboard focus).
+    p.inert = true;
     anchor?.setAttribute("aria-expanded", "false");
     document.removeEventListener("keydown", onKey);
     if (restoreFocus) anchor?.focus({ preventScroll: true });
@@ -188,8 +191,13 @@ function createThemePicker(theme, mount) {
       return;
     }
     p.setAttribute("data-leaving", "");
-    b.remove();
-    setTimeout(() => p.remove(), 220);
+    // Keep the dismissing backdrop as a click shield until the inert panel is
+    // gone; otherwise a click on its exit frame can activate the page below.
+    b.setAttribute("data-leaving", "");
+    setTimeout(() => {
+      p.remove();
+      b.remove();
+    }, 220);
   }
 
   function onKey(event) {
@@ -759,11 +767,13 @@ function createAgentSection(root) {
     const name = nameEl.textContent.trim();
     if (icon.dataset.vnName === name) return;
     const id = link.closest(".hub-agent-row")?.dataset.reorderId;
-    const kind = NODE_ICONS[id] ?? NODE_ICONS[name] ?? KINDS.find(([re]) => re.test(name))?.[1] ?? "monogram";
+    const image = NODE_IMAGES[id] ?? NODE_IMAGES[name];
+    const kind = image ? "image" : NODE_ICONS[id] ?? NODE_ICONS[name] ?? KINDS.find(([re]) => re.test(name))?.[1] ?? "monogram";
     icon.dataset.vnName = name;
     icon.dataset.vnKind = kind;
     icon.dataset.vnInitials = initials(name);
-    if (kind === "monogram") icon.style.setProperty("--vn-glyph", monogramGlyph(icon.dataset.vnInitials));
+    if (kind === "image") icon.style.setProperty("--vn-glyph", image);
+    else if (kind === "monogram") icon.style.setProperty("--vn-glyph", monogramGlyph(icon.dataset.vnInitials));
     else icon.style.removeProperty("--vn-glyph");
     if (!link.title) link.title = name;
   }
