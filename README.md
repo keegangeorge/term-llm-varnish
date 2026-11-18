@@ -112,11 +112,16 @@ Edit `local.json` using your Hub's node IDs:
   "nodeIcons": {
     "my-assistant": "core",
     "my-nas": "home"
+  },
+  "nodeImages": {
+    "my-laptop": "local/laptop.png"
   }
 }
 ```
 
 `nodeIcons` picks an agent's tile glyph, keyed by node ID or display name: `laptop`, `cloud`, `box`, `sparkle`, `home`, `server`, `core` (an arc-reactor style ring), or `monogram` for initials. The tile is also that agent's tab favicon.
+
+`nodeImages` puts a picture on an agent's tile instead, keyed the same way, and wins over `nodeIcons`. Put the images in a `local/` folder next to `local.json` (gitignored too; `install.sh` copies it) and give their paths, like `local/laptop.png`, or use a `data:image/...` URI. Nothing is loaded from other sites. Small square images with transparent backgrounds work best, and pixel art stays crisp. The picture is also that agent's tab favicon.
 
 Then run `./install.sh` again and reload extensions. Explicit browser accent choices take precedence. `local.json` is gitignored and is served to browsers as an extension asset, so **never put credentials or other secrets in it**. Updating without a source `local.json` preserves an existing installed copy.
 
