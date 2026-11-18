@@ -37,6 +37,10 @@ export async function checkPalettePreferenceFocus(page) {
   assert(await page.locator('.vn-popover:not([data-leaving]) [data-scheme="system"]').evaluate((element) => element === document.activeElement));
   await page.keyboard.press('Escape');
   await page.locator('.vn-popover').waitFor({ state: 'detached' });
+  // Leave the native text-size state ready for the next independent helper.
+  // Keep using the actual palette so cleanup also exercises its focus handoff.
+  await composer.focus();
+  await choose('Text size: Comfortable', composer, 'type', 'comfortable');
   await composer.fill('');
-  return { steps, draftSelectionPreserved: true, pickerKeyboardRecovery: true };
+  return { steps, draftSelectionPreserved: true, pickerKeyboardRecovery: true, textSizeRestored: true };
 }
