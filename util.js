@@ -36,26 +36,59 @@ export const GLYPHS = ["laptop", "cloud", "box", "sparkle", "home", "server", "c
 // A picture replaces the glyph and wins over nodeIcons.
 export const NODE_IMAGES = {};
 
-export async function loadLocalConfig() {
-  try {
-    const res = await fetch(new URL("./local.json", import.meta.url), { credentials: "same-origin" });
-    if (!res.ok) return;
-    const cfg = await res.json();
-    if (cfg && typeof cfg.nodeAccents === "object") Object.assign(NODE_ACCENTS, cfg.nodeAccents);
-    if (cfg && typeof cfg.nodeIcons === "object") {
-      for (const [key, glyph] of Object.entries(cfg.nodeIcons)) if (GLYPHS.includes(glyph)) NODE_ICONS[key] = glyph;
-    }
-    if (cfg && typeof cfg.nodeImages === "object") {
-      for (const [key, src] of Object.entries(cfg.nodeImages)) {
-        if (typeof src !== "string") continue;
-        // Same-origin files or inline images only: nothing is fetched from elsewhere.
-        const url = /^data:image\//.test(src) ? src : /^[\w./-]+$/.test(src) && !src.includes("..") ? new URL(src, import.meta.url).href : null;
-        if (url) NODE_IMAGES[key] = `url("${url.replace(/"/g, "%22")}")`;
-      }
-    }
-  } catch {
-    // No local.json (the normal case): built-in defaults apply.
+const LOCAL_CONFIG_KEY = "term-llm:varnish:local-config";
+
+function applyLocalConfig(cfg) {
+  for (const table of [NODE_ACCENTS, NODE_ICONS, NODE_IMAGES]) {
+    for (const key of Object.keys(table)) delete table[key];
   }
+  if (!cfg || typeof cfg !== "object") return;
+  if (typeof cfg.nodeAccents === "object") Object.assign(NODE_ACCENTS, cfg.nodeAccents);
+  if (typeof cfg.nodeIcons === "object") {
+    for (const [key, glyph] of Object.entries(cfg.nodeIcons)) if (GLYPHS.includes(glyph)) NODE_ICONS[key] = glyph;
+  }
+  if (typeof cfg.nodeImages === "object") {
+    for (const [key, src] of Object.entries(cfg.nodeImages)) {
+      if (typeof src !== "string") continue;
+      // Same-origin files or inline images only: nothing is fetched from elsewhere.
+      const url = /^data:image\//.test(src) ? src : /^[\w./-]+$/.test(src) && !src.includes("..") ? new URL(src, import.meta.url).href : null;
+      if (url) NODE_IMAGES[key] = `url("${url.replace(/"/g, "%22")}")`;
+    }
+  }
+}
+
+function parseLocalConfig(text) {
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Applies the last local.json at once, so a page load (every Hub node switch)
+// paints the node's accent and tile pictures without waiting on a request,
+// then fetches the current file. Resolves true when that changed anything.
+export function loadLocalConfig() {
+  const cached = read(LOCAL_CONFIG_KEY, "");
+  applyLocalConfig(parseLocalConfig(cached));
+  return (async () => {
+    let text = "";
+    try {
+      const res = await fetch(new URL("./local.json", import.meta.url), { credentials: "same-origin" });
+      // No local.json (the normal case): built-in defaults apply.
+      if (res.ok) text = await res.text();
+      else if (res.status !== 404) return false;
+    } catch {
+      // Offline: keep the last known settings.
+      return false;
+    }
+    if (parseLocalConfig(text) === null) text = "";
+    if (text === cached) return false;
+    if (text) write(LOCAL_CONFIG_KEY, text);
+    else forget(LOCAL_CONFIG_KEY);
+    applyLocalConfig(parseLocalConfig(text));
+    return true;
+  })();
 }
 
 // One-time move of settings saved under the extension's previous name.
@@ -93,6 +126,14 @@ export function write(key, value) {
     localStorage.setItem(key, value);
   } catch {
     // Storage unavailable: settings last for this page only.
+  }
+}
+
+export function forget(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage unavailable: nothing was saved.
   }
 }
 
