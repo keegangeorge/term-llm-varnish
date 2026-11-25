@@ -358,6 +358,12 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     ]);
     overlay = el("div", { class: "vn-pal-overlay" }, [panel]);
     overlay.addEventListener("pointerdown", (e) => {
+      if (e.currentTarget.hasAttribute("data-leaving")) {
+        // The exiting overlay shields the page while its panel is inert. Do not
+        // steal restored focus or cancel an action already chosen from it.
+        e.preventDefault();
+        return;
+      }
       if (e.target === overlay) {
         // Removing the backdrop must not let the pointer's default focus action
         // overwrite the origin restored by close().
@@ -394,6 +400,9 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     if (!overlay) return;
     const o = overlay;
     overlay = null;
+    // Keep the fading overlay as a pointer shield, but make its old input and
+    // options unavailable immediately. A rapid reopen owns a different panel.
+    o.querySelector(".vn-pal").inert = true;
     window.removeEventListener("resize", revealSelection);
     if (reducedMotion.matches) o.remove();
     else {
@@ -411,7 +420,9 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     if (mod && !event.altKey && !event.shiftKey && (event.key === "k" || event.key === "K")) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      open();
+      // Auto-repeat belongs to the same physical shortcut press. Consume it
+      // above so the host's Widgets shortcut cannot run behind the palette.
+      if (!event.repeat) open();
     }
   };
   window.addEventListener("keydown", onGlobalKey, true);
