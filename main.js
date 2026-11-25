@@ -7,7 +7,7 @@
 
 import {
   KEYS, ACCENTS, NODE_ID, html, reducedMotion, read, write, nodeAccent,
-  setApiPrefix, loadLocalConfig, NODE_ICONS, currentProviderSync, loadProviders, providerTypeSync,
+  setApiPrefix, loadLocalConfig, NODE_ICONS, NODE_IMAGES, currentProviderSync, loadProviders, providerTypeSync,
 } from "./util.js";
 import { logoKey, logoSvg } from "./logos.js";
 import { createThread } from "./thread.js";
@@ -138,6 +138,14 @@ function createTheme() {
       apply(true);
       notify();
     },
+    // local.json changed this node's default accent (a picked accent still wins).
+    refreshNodeAccent() {
+      const next = nodeAccent(NODE_ID);
+      if (next === accent) return;
+      accent = next;
+      apply(false);
+      notify();
+    },
     setAccent(next) {
       accent = next;
       write(accentKey, next);
@@ -179,6 +187,9 @@ function createThemePicker(theme, mount) {
     const b = backdrop;
     popover = null;
     backdrop = null;
+    // The exit animation keeps the panel mounted, but dismissal ends its
+    // interaction lifetime immediately (including pointer and keyboard focus).
+    p.inert = true;
     anchor?.setAttribute("aria-expanded", "false");
     document.removeEventListener("keydown", onKey);
     if (restoreFocus) anchor?.focus({ preventScroll: true });
@@ -188,8 +199,13 @@ function createThemePicker(theme, mount) {
       return;
     }
     p.setAttribute("data-leaving", "");
-    b.remove();
-    setTimeout(() => p.remove(), 220);
+    // Keep the dismissing backdrop as a click shield until the inert panel is
+    // gone; otherwise a click on its exit frame can activate the page below.
+    b.setAttribute("data-leaving", "");
+    setTimeout(() => {
+      p.remove();
+      b.remove();
+    }, 220);
   }
 
   function onKey(event) {
@@ -759,11 +775,13 @@ function createAgentSection(root) {
     const name = nameEl.textContent.trim();
     if (icon.dataset.vnName === name) return;
     const id = link.closest(".hub-agent-row")?.dataset.reorderId;
-    const kind = NODE_ICONS[id] ?? NODE_ICONS[name] ?? KINDS.find(([re]) => re.test(name))?.[1] ?? "monogram";
+    const image = NODE_IMAGES[id] ?? NODE_IMAGES[name];
+    const kind = image ? "image" : NODE_ICONS[id] ?? NODE_ICONS[name] ?? KINDS.find(([re]) => re.test(name))?.[1] ?? "monogram";
     icon.dataset.vnName = name;
     icon.dataset.vnKind = kind;
     icon.dataset.vnInitials = initials(name);
-    if (kind === "monogram") icon.style.setProperty("--vn-glyph", monogramGlyph(icon.dataset.vnInitials));
+    if (kind === "image") icon.style.setProperty("--vn-glyph", image);
+    else if (kind === "monogram") icon.style.setProperty("--vn-glyph", monogramGlyph(icon.dataset.vnInitials));
     else icon.style.removeProperty("--vn-glyph");
     if (!link.title) link.title = name;
   }
@@ -962,7 +980,8 @@ export async function activate(api) {
   const root = api.root || document.getElementById("root");
   const mount = api.mount || document.body;
   setApiPrefix(api.getContext?.().prefix ?? "");
-  await loadLocalConfig();
+  // Applies the last known local.json now; the fresh copy arrives below.
+  const localConfig = loadLocalConfig();
 
   const theme = createTheme();
   const picker = createThemePicker(theme, mount);
@@ -1054,7 +1073,18 @@ export async function activate(api) {
   tick();
   observer.observe(document.body, { childList: true, subtree: true });
 
+  // Repaint accents, tiles and the favicon if local.json differed from the copy
+  // applied above (first run on this browser, or an edit).
+  let disposed = false;
+  void localConfig.then((changed) => {
+    if (!changed || disposed) return;
+    theme.refreshNodeAccent();
+    document.dispatchEvent(new CustomEvent("vn:accent-change"));
+    tick();
+  });
+
   return () => {
+    disposed = true;
     observer.disconnect();
     attrObserver.disconnect();
     cancelAnimationFrame(frame);
