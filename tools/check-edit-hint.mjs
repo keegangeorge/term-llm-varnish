@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-// Focused DOM unit test: the production module decorates a detached synthetic
-// root. This is not host/backend integration; the paired VM scenario supplies
-// real host rendering and native pointer/confirmation evidence separately.
+// Focused DOM unit test: the production module decorates a connected synthetic
+// root. This is not host/backend integration. The newer-host fallback scenario
+// separately verifies safe omission and native Copy, not Edit confirmation.
 export async function checkEditHint(page) {
   const dataURL = (text) => `data:text/javascript;base64,${Buffer.from(text).toString('base64')}`;
   const util = dataURL(fs.readFileSync(new URL('../util.js', import.meta.url), 'utf8'));
