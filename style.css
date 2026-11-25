@@ -9,6 +9,11 @@
  * Theme state lives on <html>, set by main.js:
  *   data-vn-scheme="dark|light"   resolved scheme (System follows the OS)
  *   data-vn-accent="indigo|…"     highlight colour
+ *   data-vn-type="compact"        compact type scale (comfortable otherwise)
+ *
+ * main.js runs only after the app has started, so absent attributes must give
+ * the default look: the first paint of every page load (each Hub node switch)
+ * happens before it.
  */
 
 /* ---------------------------------------------------------------- fonts */
@@ -772,6 +777,8 @@ a {
 .hub-agent-icon > * { display: none; }
 
 .hub-agent-icon[data-vn-kind="monogram"] { --vn-glyph-inset: 0px; }
+/* A picture from local.json's nodeImages fills the tile; pixel art stays crisp. */
+.hub-agent-icon[data-vn-kind="image"] { --vn-glyph-inset: 1px; image-rendering: pixelated; }
 
 .hub-agent-icon[data-vn-kind="laptop"] { --vn-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='11' rx='2'/%3E%3Cpath d='M2 19h20'/%3E%3C/svg%3E"); }
 .hub-agent-icon[data-vn-kind="cloud"] { --vn-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.75 4.75 0 0 1-.5 9.5z'/%3E%3C/svg%3E"); }
@@ -912,6 +919,7 @@ a {
 /* The monogram image is drawn for the 22px tile; 3px in keeps its letters
    near the 12px they had as text. */
 .hub-agent-group[data-vn-dock] .hub-agent-icon[data-vn-kind="monogram"] { --vn-glyph-inset: 3px; }
+.hub-agent-group[data-vn-dock] .hub-agent-icon[data-vn-kind="image"] { --vn-glyph-inset: 3px; }
 
 .hub-agent-group[data-vn-dock] .hub-agent-link:hover .hub-agent-icon {
   transform: translateY(-2px) scale(1.12);
@@ -1288,6 +1296,7 @@ a {
 }
 
 .vn-popover[data-leaving] { animation: vn-pop-out 140ms ease-in both; }
+.vn-popover-backdrop[data-leaving] { animation: vn-fade-out 140ms ease-in both; }
 
 .vn-popover-backdrop {
   position: fixed;
@@ -2596,7 +2605,7 @@ select optgroup {
   .message.thought.live .thought-label { animation: none; color: var(--text); background: none; }
 }
 
-:root[data-vn-type="comfortable"] .thought-toggle { font-size: 0.875rem; }
+:root:not([data-vn-type="compact"]) .thought-toggle { font-size: 0.875rem; }
 
 .tool-group-details.open { padding: 0.35rem 0 0.4rem; }
 
@@ -3947,56 +3956,57 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 /* ------------------------------------------------- comfortable type */
 
 /* ChatGPT-style reading scale: 16px prose on a 28px line, 14px chrome.
- * Compact (default stylesheet values above) stays one click away. */
-:root[data-vn-type="comfortable"] .messages { gap: 1.1rem; }
-:root[data-vn-type="comfortable"] .messages > .message.user:not(:first-child) { margin-top: 1.5rem; }
+ * The default, so it applies before main.js sets data-vn-type; compact (the
+ * stylesheet values above) stays one click away. */
+:root:not([data-vn-type="compact"]) .messages { gap: 1.1rem; }
+:root:not([data-vn-type="compact"]) .messages > .message.user:not(:first-child) { margin-top: 1.5rem; }
 
-:root[data-vn-type="comfortable"] { --message-font-size: 1rem; }
+:root:not([data-vn-type="compact"]) { --message-font-size: 1rem; }
 
-:root[data-vn-type="comfortable"] .message-body {
+:root:not([data-vn-type="compact"]) .message-body {
   line-height: 1.75;
   letter-spacing: 0;
 }
 
-:root[data-vn-type="comfortable"] .message.user .message-body {
+:root:not([data-vn-type="compact"]) .message.user .message-body {
   line-height: 1.5;
   padding: 0.625rem 1.125rem;
 }
 
-:root[data-vn-type="comfortable"] .markdown-body p { margin: 0.8em 0; }
-:root[data-vn-type="comfortable"] .markdown-body li { margin: 0.35em 0; }
-:root[data-vn-type="comfortable"] .markdown-body ul,
-:root[data-vn-type="comfortable"] .markdown-body ol { margin: 0.6em 0 0.9em; padding-left: 1.5rem; }
+:root:not([data-vn-type="compact"]) .markdown-body p { margin: 0.8em 0; }
+:root:not([data-vn-type="compact"]) .markdown-body li { margin: 0.35em 0; }
+:root:not([data-vn-type="compact"]) .markdown-body ul,
+:root:not([data-vn-type="compact"]) .markdown-body ol { margin: 0.6em 0 0.9em; padding-left: 1.5rem; }
 
-:root[data-vn-type="comfortable"] .markdown-body h1,
-:root[data-vn-type="comfortable"] .markdown-body h2,
-:root[data-vn-type="comfortable"] .markdown-body h3,
-:root[data-vn-type="comfortable"] .markdown-body h4 { margin: 1.4em 0 0.5em; }
-:root[data-vn-type="comfortable"] .markdown-body h1 { font-size: 1.5rem; }
-:root[data-vn-type="comfortable"] .markdown-body h2 { font-size: 1.25rem; }
-:root[data-vn-type="comfortable"] .markdown-body h3 { font-size: 1.125rem; }
-:root[data-vn-type="comfortable"] .markdown-body h4 { font-size: 1rem; }
+:root:not([data-vn-type="compact"]) .markdown-body h1,
+:root:not([data-vn-type="compact"]) .markdown-body h2,
+:root:not([data-vn-type="compact"]) .markdown-body h3,
+:root:not([data-vn-type="compact"]) .markdown-body h4 { margin: 1.4em 0 0.5em; }
+:root:not([data-vn-type="compact"]) .markdown-body h1 { font-size: 1.5rem; }
+:root:not([data-vn-type="compact"]) .markdown-body h2 { font-size: 1.25rem; }
+:root:not([data-vn-type="compact"]) .markdown-body h3 { font-size: 1.125rem; }
+:root:not([data-vn-type="compact"]) .markdown-body h4 { font-size: 1rem; }
 
-:root[data-vn-type="comfortable"] .markdown-body :not(pre) > code { font-size: 0.875em; }
-:root[data-vn-type="comfortable"] .markdown-body pre code { font-size: 0.875rem; line-height: 1.7; padding: 1rem 1.15rem; }
-:root[data-vn-type="comfortable"] .markdown-body table { font-size: 0.875rem; }
+:root:not([data-vn-type="compact"]) .markdown-body :not(pre) > code { font-size: 0.875em; }
+:root:not([data-vn-type="compact"]) .markdown-body pre code { font-size: 0.875rem; line-height: 1.7; padding: 1rem 1.15rem; }
+:root:not([data-vn-type="compact"]) .markdown-body table { font-size: 0.875rem; }
 
-:root[data-vn-type="comfortable"] .prompt { font-size: 1rem; line-height: 1.5; }
-:root[data-vn-type="comfortable"] .vn-chip { font-size: 0.8125rem; }
+:root:not([data-vn-type="compact"]) .prompt { font-size: 1rem; line-height: 1.5; }
+:root:not([data-vn-type="compact"]) .vn-chip { font-size: 0.8125rem; }
 
-:root[data-vn-type="comfortable"] .tool-group-toggle { font-size: 0.875rem; }
-:root[data-vn-type="comfortable"] .message-meta { font-size: 0.75rem; }
+:root:not([data-vn-type="compact"]) .tool-group-toggle { font-size: 0.875rem; }
+:root:not([data-vn-type="compact"]) .message-meta { font-size: 0.75rem; }
 
-:root[data-vn-type="comfortable"] .session-title { font-size: 0.875rem; line-height: 1.4; }
-:root[data-vn-type="comfortable"] .session-meta { font-size: 0.75rem; }
-:root[data-vn-type="comfortable"] .session-group h3,
-:root[data-vn-type="comfortable"] .session-group-toggle { font-size: 0.75rem; }
-:root[data-vn-type="comfortable"] .new-chat-btn,
-:root[data-vn-type="comfortable"] .widgets-sidebar-btn,
-:root[data-vn-type="comfortable"] .sidebar-search-input,
-:root[data-vn-type="comfortable"] .hub-agent-link { font-size: 0.875rem; }
-:root[data-vn-type="comfortable"] .brand,
-:root[data-vn-type="comfortable"] .header-title { font-size: 0.9375rem; }
+:root:not([data-vn-type="compact"]) .session-title { font-size: 0.875rem; line-height: 1.4; }
+:root:not([data-vn-type="compact"]) .session-meta { font-size: 0.75rem; }
+:root:not([data-vn-type="compact"]) .session-group h3,
+:root:not([data-vn-type="compact"]) .session-group-toggle { font-size: 0.75rem; }
+:root:not([data-vn-type="compact"]) .new-chat-btn,
+:root:not([data-vn-type="compact"]) .widgets-sidebar-btn,
+:root:not([data-vn-type="compact"]) .sidebar-search-input,
+:root:not([data-vn-type="compact"]) .hub-agent-link { font-size: 0.875rem; }
+:root:not([data-vn-type="compact"]) .brand,
+:root:not([data-vn-type="compact"]) .header-title { font-size: 0.9375rem; }
 
 /* ---------------------------------------------------------------- motion */
 
