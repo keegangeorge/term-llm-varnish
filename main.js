@@ -138,6 +138,14 @@ function createTheme() {
       apply(true);
       notify();
     },
+    // local.json changed this node's default accent (a picked accent still wins).
+    refreshNodeAccent() {
+      const next = nodeAccent(NODE_ID);
+      if (next === accent) return;
+      accent = next;
+      apply(false);
+      notify();
+    },
     setAccent(next) {
       accent = next;
       write(accentKey, next);
@@ -972,7 +980,8 @@ export async function activate(api) {
   const root = api.root || document.getElementById("root");
   const mount = api.mount || document.body;
   setApiPrefix(api.getContext?.().prefix ?? "");
-  await loadLocalConfig();
+  // Applies the last known local.json now; the fresh copy arrives below.
+  const localConfig = loadLocalConfig();
 
   const theme = createTheme();
   const picker = createThemePicker(theme, mount);
@@ -1064,7 +1073,18 @@ export async function activate(api) {
   tick();
   observer.observe(document.body, { childList: true, subtree: true });
 
+  // Repaint accents, tiles and the favicon if local.json differed from the copy
+  // applied above (first run on this browser, or an edit).
+  let disposed = false;
+  void localConfig.then((changed) => {
+    if (!changed || disposed) return;
+    theme.refreshNodeAccent();
+    document.dispatchEvent(new CustomEvent("vn:accent-change"));
+    tick();
+  });
+
   return () => {
+    disposed = true;
     observer.disconnect();
     attrObserver.disconnect();
     cancelAnimationFrame(frame);
