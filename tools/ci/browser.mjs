@@ -15,6 +15,7 @@ import { checkDraftCaret } from '../draft-caret.mjs';
 import { checkPaletteChats } from './palette-chats.mjs';
 import { checkPaletteComposition } from '../check-palette-composition.mjs';
 import { checkPalettePreferenceFocus } from '../check-palette-preference-focus.mjs';
+import { checkPaletteExit } from '../check-palette-exit.mjs';
 import { checkPaletteHeldShortcut } from '../check-palette-held-shortcut.mjs';
 
 import { checkPalettePointerFocus } from '../check-palette-pointer-focus.mjs';
@@ -84,6 +85,7 @@ try {
 
       const paletteComposition = await checkPaletteComposition(page);
       const palettePreferenceFocus = await checkPalettePreferenceFocus(page);
+      const paletteExit = await checkPaletteExit(page);
       const paletteHeldShortcut = await checkPaletteHeldShortcut(page);
 
       const palettePointerFocus = await checkPalettePointerFocus(page);
@@ -109,7 +111,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, appearanceRadioKeys, appearanceExit, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, palettePreferenceFocus, paletteHeldShortcut, palettePointerFocus, reads: [...reads].sort() });
+      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, appearanceRadioKeys, appearanceExit, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, palettePreferenceFocus, paletteExit, paletteHeldShortcut, palettePointerFocus, reads: [...reads].sort() });
 
     } catch (error) {
       failed = true;
