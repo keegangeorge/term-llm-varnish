@@ -1,5 +1,6 @@
-# Per-machine config (node default accents)
+# Per-machine config (node default accents, icons and pictures)
 local.json
+local/
 
 # Dev tooling
 tools/node_modules/
