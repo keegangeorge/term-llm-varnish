@@ -12,11 +12,12 @@ export async function checkStarterDraft(page) {
   };
   page.on('dialog', handleDialog);
   try {
-    for (const [index, label] of ['Review a pull request', 'Run the specs', 'Explain this codebase', 'Open a shell'].entries()) {
+    for (const keyboard of [false, true]) for (const label of ['Review a pull request', 'Run the specs', 'Explain this codebase', 'Open a shell']) {
       await composer.fill(draft);
+      await composer.evaluate((el) => el.setSelectionRange(5, 12, 'backward'));
       const starter = page.getByText(label, { exact: true });
       const count = dialogs.length;
-      if (index === 1) {
+      if (keyboard) {
         await starter.focus();
         await page.keyboard.press('Enter');
       } else await starter.click();
@@ -25,10 +26,12 @@ export async function checkStarterDraft(page) {
       assert.equal(dialogs.at(-1).message, 'Replace your current draft with this starter?');
       assert.equal(await composer.inputValue(), draft, `${label} cancellation preserves draft`);
       assert.equal(await page.locator('.shell-overlay').count(), 0, 'Cancelled shell starter does not open shell');
+      assert(await composer.evaluate((el) => el === document.activeElement), 'Cancellation restores composer focus');
+      assert.deepEqual(await composer.evaluate((el) => [el.selectionStart, el.selectionEnd, el.selectionDirection]), [5, 12, 'backward'], 'Cancellation retains exact selection');
     }
     accept = true;
     await page.getByText('Run the specs', { exact: true }).click();
-    assert.equal(dialogs.length, 5, 'Accepting replacement still asks first');
+    assert.equal(dialogs.length, 9, 'Accepting replacement still asks first');
     assert.equal(await composer.inputValue(), 'Run the specs for ');
     assert.equal(await composer.evaluate((el) => el === document.activeElement), true);
     const selection = await composer.evaluate((el) => [el.selectionStart, el.selectionEnd]);
@@ -39,11 +42,11 @@ export async function checkStarterDraft(page) {
     ]) {
       await composer.fill(initial);
       await page.getByText(label, { exact: true }).click();
-      assert.equal(dialogs.length, 5, 'Empty and whitespace-only drafts need no confirmation');
+      assert.equal(dialogs.length, 9, 'Empty and whitespace-only drafts need no confirmation');
       assert.equal(await composer.inputValue(), expected);
     }
     await composer.fill('');
-    return { cancelled: 4, accepted: 1, emptyOrWhitespace: 2, keyboardCancellation: true };
+    return { cancelled: 8, accepted: 1, emptyOrWhitespace: 2, keyboardCancellation: true, cancellationFocusAndSelection: true };
   } finally {
     page.off('dialog', handleDialog);
   }
