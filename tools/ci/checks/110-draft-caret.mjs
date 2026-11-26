@@ -45,3 +45,5 @@ export async function checkDraftCaret(page) {
     await composer.fill(original);
   }
 }
+
+export default { key: 'draftCaret', run: checkDraftCaret };

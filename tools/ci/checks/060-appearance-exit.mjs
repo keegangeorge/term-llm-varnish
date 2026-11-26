@@ -29,3 +29,5 @@ export async function checkAppearanceExit(page) {
   assert(await trigger.evaluate((b) => b === document.activeElement), 'Reopened picker restores trigger focus');
   return { dismissedInert: true, preferencePreserved: true, reopened: true };
 }
+
+export default { key: 'appearanceExit', run: checkAppearanceExit };

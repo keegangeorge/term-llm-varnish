@@ -40,3 +40,5 @@ export async function checkPaletteComposition(page) {
     await client.detach();
   }
 }
+
+export default { key: 'paletteComposition', run: checkPaletteComposition };

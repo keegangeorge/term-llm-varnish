@@ -47,3 +47,5 @@ export async function checkPaletteContrast(page) {
     await page.emulateMedia({ forcedColors: 'none' });
   }
 }
+
+export default { key: 'paletteContrast', run: checkPaletteContrast };
