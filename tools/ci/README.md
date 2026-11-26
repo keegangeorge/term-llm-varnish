@@ -63,6 +63,34 @@ user with the verified binary path. The runner enforces those same checks. Never
 use a merely firewalled or ordinary bridge network as a fallback. Hosted Actions
 namespace creation remains a separately untested setup until Actions executes.
 
+## Adding a browser check
+
+Add one file to `tools/ci/checks/` and leave `browser.mjs` alone. The harness
+loads every `NNN-kebab-case.mjs` file there in name order:
+
+```js
+async function checkPaletteContrast(page) {
+  // Drive the real UI through `page`, assert, and return a small summary.
+  return { checked: true };
+}
+
+export default { key: 'paletteContrast', run: checkPaletteContrast };
+```
+
+- `key` names the check's entry in each scenario result in `report.json`. It
+  must be camelCase and unique; the loader rejects duplicates.
+- `run(page, { name, options })` runs once per scenario on the shared page, after
+  the shell has loaded. Leave any overlay you open closed again.
+- `scenarios: ['desktop-dark']` limits a page check to the listed scenarios.
+- `scope: 'browser'` runs `run(browser)` once before the scenarios and stores
+  its result at the top level of the report.
+- Checks share a page, so the prefix sets their order. Take the next multiple
+  of 10 above the current highest unless the check must run earlier. Two branches choosing the same number still merge cleanly because
+  their file names differ.
+
+`node --test tools/ci/registry.test.mjs` validates every check file without
+starting a browser.
+
 ## Scope and boundaries
 
 - `source-check.mjs`: parse-only JS syntax (ESM via stdin, no root package), manifest

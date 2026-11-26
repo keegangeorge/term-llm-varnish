@@ -44,3 +44,5 @@ export async function checkPalettePreferenceFocus(page) {
   await composer.fill('');
   return { steps, draftSelectionPreserved: true, pickerKeyboardRecovery: true, textSizeRestored: true };
 }
+
+export default { key: "palettePreferenceFocus", run: checkPalettePreferenceFocus };

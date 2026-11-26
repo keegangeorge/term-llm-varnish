@@ -42,3 +42,5 @@ export async function checkPaletteHeldShortcut(page) {
     await page.keyboard.up('Control');
   }
 }
+
+export default { key: 'paletteHeldShortcut', run: checkPaletteHeldShortcut };
