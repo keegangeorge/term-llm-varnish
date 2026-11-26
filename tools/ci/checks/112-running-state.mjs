@@ -25,3 +25,5 @@ export async function checkRunningState(page) {
   for (const result of results) assert.equal(result.actual, result.expected, result.name);
   return results;
 }
+
+export default { key: 'runningState', run: checkRunningState };

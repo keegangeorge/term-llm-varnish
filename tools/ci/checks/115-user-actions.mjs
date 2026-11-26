@@ -117,3 +117,5 @@ export async function checkUserActions(page) {
   for (const result of results) assert.equal(result.pass, true, result.name);
   return results;
 }
+
+export default { key: 'userActions', run: checkUserActions };

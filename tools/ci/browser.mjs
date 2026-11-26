@@ -2,29 +2,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { chromium } from 'playwright';
 import { BASE, allowedRequest } from './policy.mjs';
-import { checkAppearance } from '../check-appearance.mjs';
-import { checkAppearanceExit } from '../check-appearance-exit.mjs';
-import { checkOverlayEscape } from '../overlay-escape.mjs';
-import { checkAppearanceRadioKeys } from '../check-appearance-radio-keys.mjs';
-import { checkPaletteResize } from '../palette-resize.mjs';
-import { checkPaletteFilterScroll } from '../palette-filter-scroll.mjs';
-import { checkStarterButtons } from '../starter-buttons.mjs';
-import { checkAppearanceSync } from '../appearance-sync.mjs';
-import { checkDraftCaret } from '../draft-caret.mjs';
-import { checkRunningState } from '../check-running-state.mjs';
-import { checkUserActions } from '../check-user-actions.mjs';
-import { checkPaletteChats } from './palette-chats.mjs';
-import { checkPaletteComposition } from '../check-palette-composition.mjs';
-import { checkEditHint } from '../check-edit-hint.mjs';
-import { checkPaletteExit } from '../check-palette-exit.mjs';
-
-import { checkPaletteHeldShortcut } from '../check-palette-held-shortcut.mjs';
-
-import { checkPalettePointerFocus } from '../check-palette-pointer-focus.mjs';
+import { SCENARIOS, loadChecks } from './registry.mjs';
 
 const out = new URL('../out/ci/', import.meta.url);
 fs.mkdirSync(out, { recursive: true });
 const report = { synthetic: true, fixture: 'empty session store; local.json = {}; debug:fast', results: [], blocked: [] };
+const checks = await loadChecks();
 const browser = await chromium.launch({
   // Explicit offline-VM override only; CI normally uses the pinned Playwright browser.
   // Never discover or silently fall back to another installed browser.
@@ -33,14 +16,10 @@ const browser = await chromium.launch({
 });
 let failed = false;
 try {
-  report.paletteChats = await checkPaletteChats(browser);
-  for (const [name, options] of [
-    ['desktop-dark', { viewport: { width: 1440, height: 900 }, colorScheme: 'dark' }],
-    ['desktop-light', { viewport: { width: 1440, height: 900 }, colorScheme: 'light' }],
-    ['mobile-dark', { viewport: { width: 390, height: 844 }, colorScheme: 'dark', isMobile: true, hasTouch: true }],
-    ['short-mobile-light', { viewport: { width: 568, height: 320 }, colorScheme: 'light', isMobile: true, hasTouch: true }],
-    ['short-desktop-dark', { viewport: { width: 844, height: 320 }, colorScheme: 'dark' }],
-  ]) {
+  for (const check of checks.filter((check) => check.scope === 'browser')) {
+    report[check.key] = await check.run(browser);
+  }
+  for (const [name, options] of SCENARIOS) {
     const context = await browser.newContext({ ...options, serviceWorkers: 'block', permissions: [] });
     const errors = [];
     const blocked = [];
@@ -70,29 +49,11 @@ try {
       for (const selector of ['#appShell', '.composer .prompt', '.vn-theme-btn', '.vn-composer-bar']) {
         await page.locator(selector).first().waitFor({ state: 'attached' });
       }
-      const starterButtons = await checkStarterButtons(page);
-      const appearance = await checkAppearance(page);
-      let appearanceResized;
-      if (name === 'desktop-dark') {
-        appearanceResized = await checkAppearance(page, { width: 844, height: 320 });
-        await page.setViewportSize(options.viewport);
+      const checkResults = {};
+      for (const check of checks) {
+        if (check.scope !== 'page' || (check.scenarios && !check.scenarios.has(name))) continue;
+        checkResults[check.key] = await check.run(page, { name, options });
       }
-      const appearanceRadioKeys = await checkAppearanceRadioKeys(page);
-      const appearanceExit = await checkAppearanceExit(page);
-      const overlayDismissal = await checkOverlayEscape(page);
-      const paletteResize = await checkPaletteResize(page);
-      const paletteFilterScroll = await checkPaletteFilterScroll(page);
-      const appearanceSync = await checkAppearanceSync(page);
-      const draftCaret = await checkDraftCaret(page);
-      const runningState = await checkRunningState(page);
-      const userActions = await checkUserActions(page);
-      const paletteComposition = await checkPaletteComposition(page);
-      const editHint = await checkEditHint(page);
-      const paletteExit = await checkPaletteExit(page);
-
-      const paletteHeldShortcut = await checkPaletteHeldShortcut(page);
-
-      const palettePointerFocus = await checkPalettePointerFocus(page);
       await page.screenshot({ path: new URL(`${name}.png`, out).pathname });
       // Actual safe UI commands, not injected modal markup or synthetic key handlers.
       await page.keyboard.press('Control+k');
@@ -115,8 +76,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, appearanceRadioKeys, appearanceExit, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, runningState, userActions, paletteComposition, editHint, paletteExit, paletteHeldShortcut, palettePointerFocus, reads: [...reads].sort() });
-
+      report.results.push({ name, pass: true, ...checkResults, reads: [...reads].sort() });
 
 
     } catch (error) {

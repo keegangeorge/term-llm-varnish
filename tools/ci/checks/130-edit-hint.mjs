@@ -6,9 +6,9 @@ import fs from 'node:fs';
 // separately verifies safe omission and native Copy, not Edit confirmation.
 export async function checkEditHint(page) {
   const dataURL = (text) => `data:text/javascript;base64,${Buffer.from(text).toString('base64')}`;
-  const util = dataURL(fs.readFileSync(new URL('../util.js', import.meta.url), 'utf8'));
-  const arrivals = dataURL(fs.readFileSync(new URL('../arrivals.js', import.meta.url), 'utf8'));
-  const thread = dataURL(fs.readFileSync(new URL('../thread.js', import.meta.url), 'utf8')
+  const util = dataURL(fs.readFileSync(new URL('../../../util.js', import.meta.url), 'utf8'));
+  const arrivals = dataURL(fs.readFileSync(new URL('../../../arrivals.js', import.meta.url), 'utf8'));
+  const thread = dataURL(fs.readFileSync(new URL('../../../thread.js', import.meta.url), 'utf8')
     .replace('"./util.js"', JSON.stringify(util))
     .replace('"./arrivals.js"', JSON.stringify(arrivals)));
   const result = await page.evaluate(async (url) => {
@@ -70,3 +70,5 @@ export async function checkEditHint(page) {
   assert.equal(result.oldEmpty.value, 'Older message');
   return { cases: 6, guidanceMatchesAction: true, cancellationPreserved: true };
 }
+
+export default { key: 'editHint', run: checkEditHint };

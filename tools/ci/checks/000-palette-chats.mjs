@@ -5,7 +5,7 @@ import fs from 'node:fs';
 // backend. This complements the real frontend suite rather than impersonating it.
 export async function checkPaletteChats(browser) {
   const sources = new Map(['palette.js', 'util.js', 'thread.js', 'arrivals.js', 'tools/palette-chats.js'].map((name) => [
-    '/' + name, fs.readFileSync(new URL('../../' + name, import.meta.url), 'utf8'),
+    '/' + name, fs.readFileSync(new URL('../../../' + name, import.meta.url), 'utf8'),
   ]));
   const results = [];
   for (const motion of ['reduce', 'no-preference']) {
@@ -36,3 +36,5 @@ export async function checkPaletteChats(browser) {
   }
   return results;
 }
+
+export default { key: 'paletteChats', scope: 'browser', run: checkPaletteChats };

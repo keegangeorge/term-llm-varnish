@@ -65,3 +65,5 @@ export async function checkAppearance(page, resizeTo) {
   assert(await button.evaluate((b) => b === document.activeElement), 'Escape restores Appearance trigger focus');
   return initial;
 }
+
+export default { key: 'appearance', run: (page) => checkAppearance(page) };

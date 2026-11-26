@@ -327,6 +327,17 @@ export function createThread(root) {
         STARTERS.map((s) => {
           const b = el("button", { type: "button", class: "vn-starter", text: s.label });
           b.addEventListener("click", () => {
+            if (composerText(root).trim()) {
+              const prompt = root.querySelector(".composer .prompt");
+              const selection = prompt && [prompt.selectionStart, prompt.selectionEnd, prompt.selectionDirection];
+              if (!confirm("Replace your current draft with this starter?")) {
+                // Native button activation moves focus before confirmation. Let
+                // cancellation return to the unchanged draft and selection.
+                prompt?.focus({ preventScroll: true });
+                if (selection) prompt.setSelectionRange(...selection);
+                return;
+              }
+            }
             if (s.command) runSlash(s.command);
             else setComposerText(root, s.text);
           });

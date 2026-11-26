@@ -73,3 +73,5 @@ export async function checkPalettePointerFocus(page) {
   await prompt.fill(original);
   return states;
 }
+
+export default { key: 'palettePointerFocus', run: checkPalettePointerFocus };

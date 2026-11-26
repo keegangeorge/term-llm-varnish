@@ -43,3 +43,5 @@ export async function checkPaletteExit(page) {
   assert(await composer.evaluate((node) => node === document.activeElement), 'Normal chosen action still runs');
   return { inertExit: true, nativeShield: true, restoredFocus: true, rapidReopen: true, normalActivation: true };
 }
+
+export default { key: 'paletteExit', run: checkPaletteExit };

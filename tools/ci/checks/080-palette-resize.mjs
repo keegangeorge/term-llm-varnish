@@ -58,3 +58,5 @@ export async function checkPaletteResize(page) {
   await page.setViewportSize(original);
   return { before, results };
 }
+
+export default { key: 'paletteResize', run: checkPaletteResize };

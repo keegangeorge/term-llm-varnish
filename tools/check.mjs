@@ -21,7 +21,7 @@ import { createRequire } from "module";
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import { checkOverlayEscape } from "./overlay-escape.mjs";
+import { checkOverlayEscape } from "./ci/checks/070-overlay-escape.mjs";
 
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const REPO = path.resolve(HERE, "..");
