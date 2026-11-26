@@ -49,3 +49,5 @@ export async function checkPaletteModifiedArrows(page) {
     await page.locator('.vn-pal-overlay').waitFor({ state: 'detached' });
   }
 }
+
+export default { key: "paletteModifiedArrows", run: checkPaletteModifiedArrows };

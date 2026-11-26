@@ -53,3 +53,5 @@ export async function checkAppearanceRadioKeys(page) {
   await page.locator('.vn-popover').waitFor({ state: 'detached' });
   return { groups: rows, tabOrder: true, reverseTabOrder: true, reopened: true };
 }
+
+export default { key: 'appearanceRadioKeys', run: checkAppearanceRadioKeys };

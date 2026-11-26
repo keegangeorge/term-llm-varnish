@@ -80,3 +80,5 @@ export async function checkAppearanceSync(page) {
   }
   return states;
 }
+
+export default { key: 'appearanceSync', run: checkAppearanceSync };
