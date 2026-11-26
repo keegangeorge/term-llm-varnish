@@ -53,3 +53,5 @@ export async function checkOverlayEscape(page) {
   assert.equal(await page.locator(".composer .prompt").evaluate(el => el === document.activeElement), true);
   return states;
 }
+
+export default { key: 'overlayDismissal', run: checkOverlayEscape };

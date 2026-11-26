@@ -41,3 +41,5 @@ export async function checkStarterButtons(page) {
   await prompt.fill(original);
   return { buttons: labels.length, labels, tabOrder, results, snapshot: await group.ariaSnapshot(), shellActivated: false };
 }
+
+export default { key: 'starterButtons', run: checkStarterButtons };

@@ -51,3 +51,5 @@ export async function checkStarterDraft(page) {
     page.off('dialog', handleDialog);
   }
 }
+
+export default { key: 'starterDraft', run: checkStarterDraft };
