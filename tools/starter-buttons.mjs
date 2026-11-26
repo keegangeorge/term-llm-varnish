@@ -19,6 +19,9 @@ export async function checkStarterButtons(page) {
     [1, 'Space', 'Run the specs for '],
     [2, 'pointer', 'Give me a tour of this codebase: the main pieces and how they fit together.'],
   ]) {
+    // This helper covers empty-chat starter semantics. Draft replacement and its
+    // native confirmation are exercised separately by checkStarterDraft().
+    await prompt.fill('');
     const button = group.getByRole('button', { name: labels[index], exact: true });
     if (activation === 'pointer') await button.click();
     else { await button.focus(); await page.keyboard.press(activation); }

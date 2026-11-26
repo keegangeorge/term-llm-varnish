@@ -5,6 +5,7 @@ import { BASE, allowedRequest } from './policy.mjs';
 import { checkAppearance } from '../check-appearance.mjs';
 import { checkAppearanceExit } from '../check-appearance-exit.mjs';
 import { checkOverlayEscape } from '../overlay-escape.mjs';
+import { checkStarterDraft } from '../check-starter-draft.mjs';
 import { checkAppearanceRadioKeys } from '../check-appearance-radio-keys.mjs';
 import { checkPaletteResize } from '../palette-resize.mjs';
 import { checkPaletteFilterScroll } from '../palette-filter-scroll.mjs';
@@ -70,6 +71,7 @@ try {
         await page.locator(selector).first().waitFor({ state: 'attached' });
       }
       const starterButtons = await checkStarterButtons(page);
+      const starterDraft = await checkStarterDraft(page);
       const appearance = await checkAppearance(page);
       let appearanceResized;
       if (name === 'desktop-dark') {
@@ -113,7 +115,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, appearanceRadioKeys, appearanceExit, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, editHint, paletteExit, paletteHeldShortcut, palettePointerFocus, reads: [...reads].sort() });
+      report.results.push({ name, pass: true, starterButtons, starterDraft, appearance, appearanceResized, appearanceRadioKeys, appearanceExit, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, editHint, paletteExit, paletteHeldShortcut, palettePointerFocus, reads: [...reads].sort() });
 
 
     } catch (error) {
