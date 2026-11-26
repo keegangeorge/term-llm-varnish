@@ -301,6 +301,10 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     // IME confirmation and candidate navigation belong to the input method,
     // not to the command palette (including Escape to cancel composition).
     if (event.isComposing) return;
+    // Modified arrows belong to native query editing (for example Shift+ArrowDown
+    // selects text). Only plain arrows move between palette results.
+    if ((event.key === "ArrowDown" || event.key === "ArrowUp") &&
+        (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
       select((index + 1) % Math.max(1, items.length));

@@ -20,6 +20,7 @@ import { checkPaletteExit } from '../check-palette-exit.mjs';
 import { checkPaletteHeldShortcut } from '../check-palette-held-shortcut.mjs';
 
 import { checkPalettePointerFocus } from '../check-palette-pointer-focus.mjs';
+import { checkPaletteModifiedArrows } from '../check-palette-modified-arrows.mjs';
 
 const out = new URL('../out/ci/', import.meta.url);
 fs.mkdirSync(out, { recursive: true });
@@ -91,6 +92,7 @@ try {
       const paletteHeldShortcut = await checkPaletteHeldShortcut(page);
 
       const palettePointerFocus = await checkPalettePointerFocus(page);
+      const paletteModifiedArrows = await checkPaletteModifiedArrows(page);
       await page.screenshot({ path: new URL(`${name}.png`, out).pathname });
       // Actual safe UI commands, not injected modal markup or synthetic key handlers.
       await page.keyboard.press('Control+k');
@@ -113,7 +115,7 @@ try {
       await page.locator('.vn-pal').waitFor({ state: 'hidden' });
       assert.deepEqual(errors, [], 'Uncaught browser errors');
       assert.deepEqual(blocked, [], 'Unexpected requests were blocked by the read-only policy');
-      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, appearanceRadioKeys, appearanceExit, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, editHint, paletteExit, paletteHeldShortcut, palettePointerFocus, reads: [...reads].sort() });
+      report.results.push({ name, pass: true, starterButtons, appearance, appearanceResized, appearanceRadioKeys, appearanceExit, overlayDismissal, paletteResize, paletteFilterScroll, appearanceSync, draftCaret, paletteComposition, editHint, paletteExit, paletteHeldShortcut, palettePointerFocus, paletteModifiedArrows, reads: [...reads].sort() });
 
 
     } catch (error) {
