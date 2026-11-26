@@ -45,3 +45,5 @@ export async function checkPaletteFilterScroll(page) {
   await page.locator('.vn-pal-overlay').waitFor({ state: 'detached' });
   return results;
 }
+
+export default { key: 'paletteFilterScroll', run: checkPaletteFilterScroll };

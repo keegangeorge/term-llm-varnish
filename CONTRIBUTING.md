@@ -1,5 +1,11 @@
 # Contributing
 
+## Browser checks
+
+Each CI browser check lives in its own file under `tools/ci/checks/`. Add a new
+file there rather than editing `tools/ci/browser.mjs`; see
+[`tools/ci/README.md`](tools/ci/README.md#adding-a-browser-check).
+
 ## Commit messages
 
 Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
