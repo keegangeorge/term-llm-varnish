@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
-// A focused stylesheet regression on the real loaded theme. The actual Hub
-// unread-count/browser lifecycle is covered by the separate VM scenario.
+// A focused stylesheet regression on the real loaded theme. Actual frontend
+// rendering with synthetic Hub data is covered by the separate VM scenario.
 export async function checkAgentAttentionMotion(page) {
   const originalReduce = await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
   await page.evaluate(() => {
