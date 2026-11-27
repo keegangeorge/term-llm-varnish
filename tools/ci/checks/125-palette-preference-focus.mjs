@@ -32,6 +32,11 @@ export async function checkPalettePreferenceFocus(page) {
   const radio = page.locator('.vn-popover:not([data-leaving]) [data-scheme="dark"]');
   await radio.focus();
   await choose('Appearance: Light', radio, 'scheme', 'light');
+  assert.equal(await radio.getAttribute('tabindex'), '-1', 'Restored origin can be outside the current Tab sequence');
+  assert(await radio.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return element.matches(':focus-visible') && style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2;
+  }), 'Keyboard-restored radio retains a visible focus outline');
   await page.keyboard.press('ArrowRight');
   assert.equal(await page.locator('.vn-popover:not([data-leaving]) [data-scheme="system"]').getAttribute('aria-checked'), 'true', 'Returned picker focus accepts native arrow navigation');
   assert(await page.locator('.vn-popover:not([data-leaving]) [data-scheme="system"]').evaluate((element) => element === document.activeElement));
