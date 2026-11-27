@@ -429,7 +429,7 @@ summary:focus-visible,
 
 /* Containers the app focuses programmatically (dialogs, the header, the
  * chat region) are not controls: no ring on them. */
-[tabindex="-1"]:focus-visible,
+[tabindex="-1"]:not(:is(button, a, input, textarea, select, summary, [role="radio"])):focus-visible,
 [role="dialog"]:focus-visible,
 dialog:focus-visible { outline: none; }
 
