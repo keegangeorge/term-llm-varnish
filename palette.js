@@ -45,8 +45,10 @@ const svg = (d) =>
 // Subsequence fuzzy match. Returns { score, marks } or null.
 function fuzzy(query, text) {
   if (!query) return { score: 0, marks: [] };
-  const q = query.toLowerCase();
-  const t = text.toLowerCase();
+  // Greek final sigma lowercases contextually (ΟΣ -> ος), while a single Σ
+  // lowercases to σ. Treat those equal without changing display/highlight offsets.
+  const q = query.toLowerCase().replace(/ς/g, "σ");
+  const t = text.toLowerCase().replace(/ς/g, "σ");
   const direct = t.indexOf(q);
   if (direct >= 0) {
     const marks = [...Array(q.length)].map((_, i) => direct + i);
@@ -151,15 +153,16 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
 
     // Appearance
     for (const [id, name] of [["system", "System"], ["light", "Light"], ["dark", "Dark"]]) {
-      out.push({ group: "Appearance", icon: "theme", title: `Appearance: ${name}`, hint: theme.scheme === id ? "current" : "", run: () => theme.setScheme(id) });
+      out.push({ group: "Appearance", icon: "theme", title: `Appearance: ${name}`, hint: theme.scheme === id ? "current" : "", restoreOrigin: true, run: () => theme.setScheme(id) });
     }
     out.push({
       group: "Appearance", icon: "theme",
       title: theme.type === "compact" ? "Text size: Comfortable" : "Text size: Compact",
+      restoreOrigin: true,
       run: () => theme.setType(theme.type === "compact" ? "comfortable" : "compact"),
     });
     for (const a of ACCENTS) {
-      out.push({ group: "Appearance", icon: "theme", swatch: a.dark, title: `Accent: ${a.name}`, hint: theme.accent === a.id ? "current" : "", run: () => theme.setAccent(a.id) });
+      out.push({ group: "Appearance", icon: "theme", swatch: a.dark, title: `Accent: ${a.name}`, hint: theme.accent === a.id ? "current" : "", restoreOrigin: true, run: () => theme.setAccent(a.id) });
     }
 
     // Chats (as loaded in the sidebar)
@@ -292,7 +295,9 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
   function choose(i) {
     const item = items[i];
     if (!item || disposed) return;
-    close(false);
+    // Preferences change the current UI in place, so retain its keyboard origin.
+    // Navigation/modal commands still own their separate focus handoff.
+    close(item.restoreOrigin === true);
     const generation = actionGeneration;
     // Let the palette leave before the action opens its own UI. Reopening or
     // disposing the palette supersedes the action, including its focus handoff.

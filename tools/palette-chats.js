@@ -74,6 +74,37 @@ export async function runPaletteChatTests(createPalette) {
     }
     assert(clicks.length === 4, "Highlight-only queries never activate a chat");
     results.push("unicode-highlight-offsets");
+    sidebar.querySelector(".session-title").textContent = "Twin chat";
+    // The real browser lowercases final sigma contextually; matching must not
+    // depend on whether the query includes the rest of the Greek word.
+    for (const title of ["ΟΣ", "ος", "οσ", "ΟΣΟ", "ΟxΣ"]) {
+      const row = document.createElement("div"); row.className = "session-row";
+      const button = document.createElement("button"); button.className = "session-btn";
+      const span = document.createElement("span"); span.className = "session-title"; span.textContent = title;
+      button.append(span); row.append(button); sidebar.append(row);
+    }
+    root.querySelector("#origin").focus(); palette.open();
+    const input = document.querySelector(".vn-pal-overlay:not([data-leaving]) .vn-pal-input");
+    const search = (query) => {
+      input.value = query; input.dispatchEvent(new Event("input", { bubbles: true }));
+      return chatRows();
+    };
+    for (const query of ["Σ", "σ", "ς"]) {
+      const rows = search(query);
+      assert(rows.length === 5, `${query}: ordinary, final and uppercase sigma all match`);
+      for (const row of rows) {
+        const title = row.querySelector(".vn-pal-title");
+        assert(["ΟΣ", "ος", "οσ", "ΟΣΟ", "ΟxΣ"].includes(title.textContent), "Original title spelling is preserved");
+        const marked = [...title.querySelectorAll("mark")].map((mark) => mark.textContent).join("");
+        assert(["Σ", "σ", "ς"].includes(marked), "Only the original sigma character is highlighted");
+      }
+    }
+    assert(search("οσ").length === 5, "Both substring and separated subsequence paths fold final sigma");
+    assert(search("Τ").length === 0, "Unrelated Greek letter does not match");
+    assert(search("Twin chat").length === 3, "ASCII chat ranking/matching remains available");
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    results.push("sigma-case-folding");
     return results;
   } finally {
     palette.dispose(); root.remove();
