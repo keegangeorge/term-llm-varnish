@@ -45,8 +45,10 @@ const svg = (d) =>
 // Subsequence fuzzy match. Returns { score, marks } or null.
 function fuzzy(query, text) {
   if (!query) return { score: 0, marks: [] };
-  const q = query.toLowerCase();
-  const t = text.toLowerCase();
+  // Greek final sigma lowercases contextually (ΟΣ -> ος), while a single Σ
+  // lowercases to σ. Treat those equal without changing display/highlight offsets.
+  const q = query.toLowerCase().replace(/ς/g, "σ");
+  const t = text.toLowerCase().replace(/ς/g, "σ");
   const direct = t.indexOf(q);
   if (direct >= 0) {
     const marks = [...Array(q.length)].map((_, i) => direct + i);
