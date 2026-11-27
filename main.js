@@ -209,6 +209,9 @@ function createThemePicker(theme, mount) {
   }
 
   function onKey(event) {
+    // Composition cancellation belongs to the input method, including when a
+    // foreground palette is open above this picker.
+    if (event.isComposing) return;
     if (event.key === "Escape") {
       event.stopPropagation();
       event.preventDefault();
