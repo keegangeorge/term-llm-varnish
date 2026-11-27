@@ -76,14 +76,19 @@ function highlight(text, marks) {
     span.append(inMark ? el("mark", { text: buf }) : document.createTextNode(buf));
     buf = "";
   };
-  [...text].forEach((ch, i) => {
-    const m = set.has(i);
+  // Matcher marks use UTF-16 offsets (indexOf), while iteration keeps each
+  // Unicode code point intact. Advance by its code-unit length so an emoji
+  // cannot shift the highlights that follow it.
+  let offset = 0;
+  for (const ch of text) {
+    const m = set.has(offset);
     if (m !== inMark) {
       flush();
       inMark = m;
     }
     buf += ch;
-  });
+    offset += ch.length;
+  }
   flush();
   return span;
 }

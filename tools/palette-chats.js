@@ -54,6 +54,27 @@ export async function runPaletteChatTests(createPalette) {
         results.push(`${activation}/${target}`);
       }
     }
+    for (const [title, queries] of [
+      ["😀 Alpha Zed", [["Alpha", "Alpha"], ["😀", "😀"], ["Zed", "Zed"], ["AZ", "AZ"], ["😀Z", "😀Z"]]],
+      ["A😀B 🚀C", [["B", "B"], ["😀", "😀"], ["🚀C", "🚀C"], ["A🚀C", "A🚀C"]]],
+      ["ASCII control", [["control", "control"], ["AC", "AC"]]],
+    ]) {
+      sidebar.querySelector(".session-title").textContent = title;
+      root.querySelector("#origin").focus(); palette.open();
+      const input = document.querySelector(".vn-pal-overlay:not([data-leaving]) .vn-pal-input");
+      for (const [query, expected] of queries) {
+        input.value = query; input.dispatchEvent(new Event("input", { bubbles: true }));
+        const row = chatRows().find((node) => node.querySelector(".vn-pal-title").textContent === title);
+        assert(row, `${title}/${query}: matching chat remains present`);
+        assert([...row.querySelectorAll(".vn-pal-title mark")].map((node) => node.textContent).join("") === expected, `${title}/${query}: highlights use original UTF-16 offsets without splitting emoji`);
+        assert(row.querySelector(".vn-pal-title").textContent === title, "Highlight rendering preserves the complete original title");
+      }
+      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      assert(document.activeElement === root.querySelector("#origin"), "Search dismissal restores origin focus");
+    }
+    assert(clicks.length === 4, "Highlight-only queries never activate a chat");
+    results.push("unicode-highlight-offsets");
+    sidebar.querySelector(".session-title").textContent = "Twin chat";
     // The real browser lowercases final sigma contextually; matching must not
     // depend on whether the query includes the rest of the Greek word.
     for (const title of ["ΟΣ", "ος", "οσ", "ΟΣΟ", "ΟxΣ"]) {
