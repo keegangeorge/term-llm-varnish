@@ -4129,6 +4129,7 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 
 @media (prefers-reduced-motion: reduce) {
   .session-group[data-vn-collapsed] > .session-row { transform: none; }
+  .hub-agent-attention,
   .streaming-indicator::before,
   .shell-status-running .shell-status-dot { animation: none; }
   .vn-popover,
