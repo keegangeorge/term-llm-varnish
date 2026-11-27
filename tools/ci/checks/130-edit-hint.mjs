@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-// Focused DOM unit test: the production module decorates a detached synthetic
-// root. This is not host/backend integration; the paired VM scenario supplies
-// real host rendering and native pointer/confirmation evidence separately.
+// Focused DOM unit test: the production module decorates a connected synthetic
+// root. This is not host/backend integration. The newer-host fallback scenario
+// separately verifies safe omission and native Copy, not Edit confirmation.
 export async function checkEditHint(page) {
   const dataURL = (text) => `data:text/javascript;base64,${Buffer.from(text).toString('base64')}`;
   const util = dataURL(fs.readFileSync(new URL('../../../util.js', import.meta.url), 'utf8'));
@@ -15,6 +15,10 @@ export async function checkEditHint(page) {
     const { createThread } = await import(url);
     const root = document.createElement('div');
     root.innerHTML = '<div class="messages"><article class="message user"><div class="message-text">Older message</div></article><article class="message user"><div class="message-text">Last message</div></article></div><div class="composer"><textarea class="prompt"></textarea></div>';
+    // The fallback's production capability guard intentionally rejects detached
+    // articles. Attach this synthetic root so these guidance cases represent
+    // supported, connected raw-source messages.
+    document.body.append(root);
     const thread = createThread(root);
     const originalConfirm = window.confirm;
     const dialogs = [];
@@ -46,6 +50,7 @@ export async function checkEditHint(page) {
     } finally {
       window.confirm = originalConfirm;
       thread.dispose();
+      root.remove();
     }
   }, thread);
   const undo = 'Edit and resend (undoes the latest turn)';

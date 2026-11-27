@@ -3693,6 +3693,20 @@ select optgroup {
   font-weight: 650;
 }
 
+/* Forced colors removes the translucent selection fill. Keep selection and
+   matched text visible without opting out of the user's system palette. */
+@media (forced-colors: active) {
+  .vn-pal-item[aria-selected="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .vn-pal-title mark {
+    background: Mark;
+    color: MarkText;
+  }
+}
+
 .vn-pal-item[data-current] .vn-pal-title::after {
   content: "•";
   margin-left: 6px;
