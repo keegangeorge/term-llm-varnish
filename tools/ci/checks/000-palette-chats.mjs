@@ -29,7 +29,7 @@ export async function checkPaletteChats(browser) {
         const { runPaletteLiveTests } = await import('/tools/palette-live.js');
         return [...original, ...await runPaletteLiveTests(createPalette)];
       });
-      assert.equal(cases.length, 13);
+      assert.equal(cases.length, 15);
       assert.deepEqual(errors, []);
       results.push({ motion, cases });
     } finally {

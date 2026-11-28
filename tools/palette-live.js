@@ -22,29 +22,38 @@ export async function runPaletteLiveTests(createPalette) {
     button.addEventListener("click", () => clicked++);
     // Character-data-only native updates must refresh without query input.
     button.querySelector(".session-title").firstChild.data = "Live renamed";
-    await wait(); palette.sync();
+    await wait();
     assert(titles().includes("Live renamed") && !titles().includes("Live beta"), "Open results follow native title changes");
     assert(selected().textContent.includes("Live renamed"), "Rename preserves selected source identity");
     assert(document.activeElement === input && input.value === "Live" && input.selectionStart === 1 && input.selectionEnd === 3, "Refresh preserves input focus, query and caret");
+    button.classList.add("active"); button.querySelector(".session-meta").textContent = "updated metadata";
+    await wait();
+    assert(selected().hasAttribute("data-current") && selected().querySelector(".vn-pal-hint").textContent === "updated metadata", "Live attributes and metadata follow their own source");
     const selectedNode = selected(); palette.sync(); await wait();
     assert(selected() === selectedNode, "Unchanged sync leaves result nodes intact");
     // Reordering must not transfer selection to another chat.
     const sidebar = root.querySelector(".sidebar"); sidebar.prepend(button.parentElement);
-    await wait(); palette.sync();
+    await wait();
     assert(selected().textContent.includes("Live renamed"), "Reordering preserves chat identity");
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     await wait(); assert(clicked === 1, "Activation uses the same connected source");
     palette.open(); // The old leaving input is not reused.
     const current = document.querySelector(".vn-pal-overlay:not([data-leaving]) .vn-pal-input");
     current.value = "Live renamed"; current.dispatchEvent(new Event("input", { bubbles: true }));
-    button.parentElement.remove();
-    // Enter before the observer delivery must not dispatch a disconnected action.
     current.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    const sourceRow = button.parentElement; sourceRow.remove();
+    await wait(); assert(clicked === 1, "Detachment during the delayed action prevents dispatch");
+    sidebar.append(sourceRow); palette.open();
+    const reopened = active().querySelector(".vn-pal-input");
+    reopened.value = "Live renamed"; reopened.dispatchEvent(new Event("input", { bubbles: true }));
+    sourceRow.remove();
+    // Enter before the observer delivery must not dispatch a disconnected action.
+    reopened.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     await wait(); assert(clicked === 1, "Removed source cannot be activated from stale results");
     assert(!titles().includes("Live renamed"), "Removed source disappears from open results");
     palette.dispose(); root.querySelector(".session-title").textContent = "After disposal";
     await wait(); assert(!document.querySelector(".vn-pal-overlay:not([data-leaving])"), "Disposal disconnects live updates");
-    return ["rename", "identity", "input", "no-churn", "reorder", "activation", "removal", "dispose"];
+    return ["rename", "identity", "input", "attributes", "no-churn", "reorder", "activation", "delayed-detach", "removal", "dispose"];
   } finally {
     palette.dispose(); root.remove();
     document.querySelectorAll(".vn-pal-overlay[data-leaving]").forEach((node) => node.remove());
