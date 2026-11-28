@@ -7,6 +7,7 @@ export async function checkPaletteSwatches(page, { options = {} } = {}) {
   await page.locator(".vn-theme-btn").click();
   const originalScheme = await page.locator('[data-scheme][aria-checked="true"]').getAttribute("data-scheme");
   await page.keyboard.press("Escape");
+  await page.locator(".vn-popover").waitFor({ state: "detached" });
   const originalMedia = options.colorScheme ?? null;
   const overlay = page.locator(".vn-pal-overlay:not([data-leaving])");
   const input = overlay.locator(".vn-pal-input");
@@ -72,10 +73,13 @@ export async function checkPaletteSwatches(page, { options = {} } = {}) {
       await page.keyboard.press("Escape");
       await page.locator(".vn-pal-overlay").waitFor({ state: "detached" });
     }
-    if (!(await page.locator('[data-scheme][aria-checked="true"]').isVisible())) {
-      await page.locator(".vn-theme-btn").click();
+    if (await page.locator(".vn-theme-btn").getAttribute("aria-expanded") === "true") {
+      await page.keyboard.press("Escape");
     }
-    await page.locator(`[data-scheme="${originalScheme}"]`).click();
+    // A leaving picker is inert, even while Playwright still calls it visible.
+    await page.locator(".vn-popover").waitFor({ state: "detached" });
+    await page.locator(".vn-theme-btn").click();
+    await page.locator(`.vn-popover:not([data-leaving]) [data-scheme="${originalScheme}"]`).click();
     await page.keyboard.press("Escape");
     await page.emulateMedia({ colorScheme: originalMedia });
     await prompt.fill(original);
