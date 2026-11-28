@@ -93,6 +93,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
   let input = null;
   let list = null;
   let items = [];
+  let catalog = [];
   let index = 0;
   let restoreFocus = null;
   let disposed = false;
@@ -167,7 +168,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
       const title = btn.querySelector(".session-title")?.textContent.trim();
       if (!title) continue;
       const meta = btn.querySelector(".session-meta")?.textContent.trim() ?? "";
-      out.push({ group: "Chats", icon: "chat", title, hint: meta, current: btn.classList.contains("active"), run: () => btn.click() });
+      out.push({ group: "Chats", icon: "chat", title, hint: meta, current: btn.classList.contains("active"), source: btn, run: () => { if (btn.isConnected && root.contains(btn)) btn.click(); } });
     }
 
     // Agents (Hub)
@@ -175,7 +176,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
       const title = link.querySelector(".hub-agent-name")?.textContent.trim();
       if (!title) continue;
       const here = link.getAttribute("aria-current") === "true";
-      out.push({ group: "Agents", icon: "agent", title, hint: here ? "here" : "Switch agent", current: here, run: () => link.click() });
+      out.push({ group: "Agents", icon: "agent", title, hint: here ? "here" : "Switch agent", current: here, source: link, run: () => { if (link.isConnected && root.contains(link)) link.click(); } });
     }
 
     // Slash commands
@@ -185,9 +186,15 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     return out;
   }
 
-  function render() {
+  const sameItem = (a, b) => a && b && (a.source || b.source
+    ? a.source === b.source
+    : a.group === b.group && a.title === b.title);
+
+  function render(all = collect(), preserve = false) {
+    const selected = preserve ? items[index] : null;
+    const scroll = preserve ? list.scrollTop : 0;
+    catalog = all;
     const q = input.value.trim();
-    const all = collect();
     let ranked;
     if (!q) {
       // A short, useful default view.
@@ -243,7 +250,8 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
       groups.get(item.group).push(item);
     }
     items = order.flatMap((g) => groups.get(g));
-    index = Math.min(index, Math.max(0, items.length - 1));
+    const retained = selected ? items.findIndex((item) => sameItem(item, selected)) : -1;
+    index = retained >= 0 ? retained : Math.min(index, Math.max(0, items.length - 1));
 
     list.replaceChildren();
     let n = 0;
@@ -271,7 +279,36 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     }
     if (!items.length) list.append(el("div", { class: "vn-pal-empty", text: "No matches" }));
     input.setAttribute("aria-activedescendant", items.length ? `vn-pal-${index}` : "");
+    if (preserve) {
+      list.scrollTop = scroll;
+      revealSelection();
+    }
   }
+
+  function sync() {
+    ensureHint();
+    if (!overlay || disposed) return;
+    const next = collect();
+    // Compare data and actual controls, never recreated action closures. An
+    // unchanged host tick must not replace rows or disturb pointer/scroll state.
+    if (next.length === catalog.length && next.every((item, i) => {
+      const old = catalog[i];
+      return sameItem(item, old) && item.title === old.title && item.hint === old.hint && item.current === old.current;
+    })) return;
+    render(next, true);
+  }
+
+  // Native text updates can be character-data-only (not seen by the main
+  // decorator's child-list observer). Watch source controls only while open.
+  const sourceObserver = new MutationObserver((records) => {
+    if (records.some((record) => {
+      const target = record.target instanceof Element ? record.target : record.target.parentElement;
+      if (target?.closest(".sidebar, .hub-agent-link")) return true;
+      return [...record.addedNodes, ...record.removedNodes].some((node) => node instanceof Element && (
+        node.matches(".sidebar, .hub-agent-link") || node.querySelector(".sidebar, .hub-agent-link")
+      ));
+    })) sync();
+  });
 
   function revealSelection() {
     list?.querySelector(`#vn-pal-${index}`)?.scrollIntoView({ block: "nearest" });
@@ -288,8 +325,13 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
   }
 
   function choose(i) {
-    const item = items[i];
-    if (!item || disposed) return;
+    const requested = items[i];
+    if (!requested || disposed) return;
+    // A source may disappear between the last observer delivery and Enter.
+    // Refresh first, but never transfer that activation to the fallback row.
+    sync();
+    const item = items.find((candidate) => sameItem(candidate, requested));
+    if (!item) return;
     // Preferences change the current UI in place, so retain its keyboard origin.
     // Navigation/modal commands still own their separate focus handoff.
     close(item.restoreOrigin === true);
@@ -395,6 +437,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     // that option visible just as keyboard navigation does, without refocusing.
     window.addEventListener("resize", revealSelection);
     render();
+    sourceObserver.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class", "aria-current"] });
     input.focus();
   }
 
@@ -403,6 +446,8 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
     if (!overlay) return;
     const o = overlay;
     overlay = null;
+    sourceObserver.disconnect();
+    catalog = [];
     // Keep the fading overlay as a pointer shield, but make its old input and
     // options unavailable immediately. A rapid reopen owns a different panel.
     o.querySelector(".vn-pal").inert = true;
@@ -442,7 +487,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
 
   return {
     open,
-    sync: ensureHint,
+    sync,
     dispose() {
       disposed = true;
       window.removeEventListener("keydown", onGlobalKey, true);

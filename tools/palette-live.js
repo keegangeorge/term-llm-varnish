@@ -31,7 +31,7 @@ export async function runPaletteLiveTests(createPalette) {
     assert(selected().textContent.includes("Live renamed"), "Reordering preserves chat identity");
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     await wait(); assert(clicked === 1, "Activation uses the same connected source");
-    palette.open(); input.value = ""; // The old leaving input is not reused.
+    palette.open(); // The old leaving input is not reused.
     const current = document.querySelector(".vn-pal-overlay:not([data-leaving]) .vn-pal-input");
     current.value = "Live renamed"; current.dispatchEvent(new Event("input", { bubbles: true }));
     button.parentElement.remove();
