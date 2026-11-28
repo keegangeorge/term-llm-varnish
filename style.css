@@ -3668,6 +3668,11 @@ select optgroup {
 
 .vn-pal-icon svg { width: 16px; height: 16px; }
 
+/* Follow the resolved scheme in CSS so an open palette repaints on System
+ * changes without replacing results, selection or the focused search input. */
+.vn-pal-icon.is-swatch { --sw: var(--sw-dark); }
+:root[data-vn-scheme="light"] .vn-pal-icon.is-swatch { --sw: var(--sw-light); }
+
 .vn-pal-icon.is-swatch::before {
   content: "";
   width: 12px;

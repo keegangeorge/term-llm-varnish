@@ -157,7 +157,7 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
       run: () => theme.setType(theme.type === "compact" ? "comfortable" : "compact"),
     });
     for (const a of ACCENTS) {
-      out.push({ group: "Appearance", icon: "theme", swatch: a.dark, title: `Accent: ${a.name}`, hint: theme.accent === a.id ? "current" : "", restoreOrigin: true, run: () => theme.setAccent(a.id) });
+      out.push({ group: "Appearance", icon: "theme", swatch: a, title: `Accent: ${a.name}`, hint: theme.accent === a.id ? "current" : "", restoreOrigin: true, run: () => theme.setAccent(a.id) });
     }
 
     // Chats (as loaded in the sidebar)
@@ -262,7 +262,11 @@ export function createPalette(root, { theme, thread, toggleAgentDock }) {
           el("span", { class: `vn-pal-title${item.mono ? " is-mono" : ""}` }, [highlight(item.title, item.marks ?? [])]),
           item.hint ? el("span", { class: "vn-pal-hint", text: item.hint }) : null,
         ]);
-        if (item.swatch) row.querySelector(".vn-pal-icon").style.setProperty("--sw", item.swatch);
+        if (item.swatch) {
+          const icon = row.querySelector(".vn-pal-icon");
+          icon.style.setProperty("--sw-dark", item.swatch.dark);
+          icon.style.setProperty("--sw-light", item.swatch.light);
+        }
         if (item.swatch) row.querySelector(".vn-pal-icon").classList.add("is-swatch");
         row.addEventListener("pointermove", () => select(i, false));
         row.addEventListener("click", () => choose(i));

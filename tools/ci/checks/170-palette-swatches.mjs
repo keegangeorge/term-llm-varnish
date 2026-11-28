@@ -23,6 +23,7 @@ export async function checkPaletteSwatches(page) {
     await page.locator(".vn-theme-btn").click();
     await page.locator(`[data-scheme="${scheme}"]`).click();
     const resolved = await page.locator("html").getAttribute("data-vn-scheme");
+    await page.waitForFunction(value => getComputedStyle(document.querySelector('[data-accent="graphite"]')).backgroundColor === value, resolved === "light" ? "rgb(63, 63, 70)" : "rgb(212, 212, 216)");
     const picker = await page.locator(".vn-swatch").evaluateAll(buttons => Object.fromEntries(buttons.map(button => [button.getAttribute("aria-label"), getComputedStyle(button).backgroundColor])));
     assert.equal(Object.keys(picker).length, 7);
     assert.equal(picker.Graphite, resolved === "light" ? "rgb(63, 63, 70)" : "rgb(212, 212, 216)");
@@ -50,6 +51,7 @@ export async function checkPaletteSwatches(page) {
       const after = await colors();
       await close();
       await page.locator(".vn-theme-btn").click();
+      await page.waitForFunction(value => getComputedStyle(document.querySelector('[data-accent="graphite"]')).backgroundColor === value, next === "light" ? "rgb(63, 63, 70)" : "rgb(212, 212, 216)");
       const changedPicker = await page.locator(".vn-swatch").evaluateAll(buttons => Object.fromEntries(buttons.map(button => [button.getAttribute("aria-label"), getComputedStyle(button).backgroundColor])));
       assert.deepEqual(after, changedPicker, "System changes repaint all swatches without rebuilding the palette");
       await page.keyboard.press("Escape");
