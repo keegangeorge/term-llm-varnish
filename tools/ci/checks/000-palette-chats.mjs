@@ -4,7 +4,7 @@ import fs from 'node:fs';
 // Serve only these tracked modules in a fresh browser context, with no runtime
 // backend. This complements the real frontend suite rather than impersonating it.
 export async function checkPaletteChats(browser) {
-  const sources = new Map(['palette.js', 'util.js', 'thread.js', 'arrivals.js', 'tools/palette-chats.js'].map((name) => [
+  const sources = new Map(['palette.js', 'util.js', 'thread.js', 'arrivals.js', 'tools/palette-chats.js', 'tools/palette-live.js'].map((name) => [
     '/' + name, fs.readFileSync(new URL('../../../' + name, import.meta.url), 'utf8'),
   ]));
   const results = [];
@@ -25,9 +25,11 @@ export async function checkPaletteChats(browser) {
       const cases = await page.evaluate(async () => {
         const { createPalette } = await import('/palette.js');
         const { runPaletteChatTests } = await import('/tools/palette-chats.js');
-        return runPaletteChatTests(createPalette);
+        const original = await runPaletteChatTests(createPalette);
+        const { runPaletteLiveTests } = await import('/tools/palette-live.js');
+        return [...original, ...await runPaletteLiveTests(createPalette)];
       });
-      assert.equal(cases.length, 5);
+      assert.equal(cases.length, 13);
       assert.deepEqual(errors, []);
       results.push({ motion, cases });
     } finally {
