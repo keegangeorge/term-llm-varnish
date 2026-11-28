@@ -13,7 +13,9 @@ export async function runPaletteLiveTests(createPalette) {
     root.querySelector("#origin").focus(); palette.open();
     const input = document.querySelector(".vn-pal-input");
     input.value = "Live"; input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    const beta = [...document.querySelectorAll(".vn-pal-item")].find((row) => row.querySelector(".vn-pal-title")?.textContent === "Live beta");
+    beta.dispatchEvent(new Event("pointermove"));
+    assert(selected() === beta, "Setup selects the intended beta source, independently of fuzzy rank");
     input.setSelectionRange(1, 3);
     const button = root.querySelectorAll(".session-btn")[1];
     button.addEventListener("click", () => clicked++);
